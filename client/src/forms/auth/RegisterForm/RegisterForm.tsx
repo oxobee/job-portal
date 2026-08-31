@@ -67,8 +67,8 @@ const RegisterForm = () => {
               form.setFieldValue("user_type_name", e.target.value)
             }
           >
-            <option value="job_seeker">İş Arayan (Job Seeker)</option>
-            <option value="hr_recruiter">İş Veren / İK (HR Recruiter)</option>
+            <option value="job_seeker">İş Arayan</option>
+            <option value="hr_recruiter">İş Veren</option>
           </select>
           {form.errors.user_type_name && (
             <FieldError error={form.errors.user_type_name} />

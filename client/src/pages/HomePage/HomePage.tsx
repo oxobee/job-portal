@@ -546,7 +546,7 @@ const HomePage = () => {
             <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
               Sıralama
             </h5>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {[
                 { id: "most-recent", name: "En Yeni İlanlar" },
                 { id: "top-salary", name: "En Yüksek Maaş" },
@@ -555,20 +555,16 @@ const HomePage = () => {
               ].map((item) => (
                 <label
                   key={item.id}
-                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition text-sm ${
-                    selectedSort === item.id
-                      ? "bg-indigo-50 text-indigo-900 font-medium"
-                      : "hover:bg-gray-50 text-gray-700"
-                  }`}
+                  className="flex items-center gap-3 text-sm text-gray-700 hover:text-indigo-600 cursor-pointer select-none py-1"
                 >
-                  <span>{item.name}</span>
                   <input
                     type="radio"
                     name="desktop-sort"
                     checked={selectedSort === item.id}
                     onChange={() => setSelectedSort(item.id)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 accent-indigo-600 cursor-pointer"
                   />
+                  <span className={selectedSort === item.id ? "font-bold text-indigo-900" : ""}>{item.name}</span>
                 </label>
               ))}
             </div>
@@ -796,11 +792,19 @@ const HomePage = () => {
                   {/* Top Header: Company Avatar & Action Buttons */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3.5">
-                      <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-sm shrink-0 ${job.logoBg}`}
-                      >
-                        {job.company.substring(0, 2).toUpperCase()}
-                      </div>
+                      {(job as any).employer_logo ? (
+                        <img
+                          src={(job as any).employer_logo}
+                          alt={job.company}
+                          className="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0 bg-white"
+                        />
+                      ) : (
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-base shadow-xs shrink-0 ${job.logoBg || "bg-indigo-600"}`}
+                        >
+                          {job.company.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <h4 className="text-base font-bold text-gray-900 group-hover:text-indigo-600 transition truncate">
                           {job.title}
@@ -883,11 +887,19 @@ const HomePage = () => {
           <div className="overflow-hidden rounded-2xl bg-white border border-gray-200/90 shadow-sm p-6 space-y-6 max-h-[calc(100vh-7rem)] overflow-y-auto">
             {/* Header / Actions */}
             <div className="flex items-start justify-between gap-4">
-              <div
-                className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-sm ${activeJob.logoBg}`}
-              >
-                {activeJob.company.substring(0, 2).toUpperCase()}
-              </div>
+              {(activeJob as any).employer_logo ? (
+                <img
+                  src={(activeJob as any).employer_logo}
+                  alt={activeJob.company}
+                  className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shrink-0 bg-white shadow-xs"
+                />
+              ) : (
+                <div
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xs shrink-0 ${activeJob.logoBg || "bg-indigo-600"}`}
+                >
+                  {activeJob.company.substring(0, 2).toUpperCase()}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <button
                   type="button"

@@ -9,12 +9,12 @@ import {
   CheckCircleIcon,
   MapPinIcon,
   PhoneIcon,
-  EnvelopeIcon,
-  AcademicCapIcon,
-  DocumentTextIcon,
-    
-  EyeIcon,
+      EyeIcon,
   BuildingOfficeIcon,
+  DocumentTextIcon,
+  BellIcon,
+  CalendarDaysIcon,
+  PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
 import PortalLayout from "@/components/layouts/portal/PortalLayout";
@@ -32,9 +32,14 @@ export interface EmployerJob {
   experience: string;
   salary: string;
   description: string;
+  responsibilities?: string[];
+  requirements?: string[];
+  benefits?: string[];
   tags: string[];
   applications?: string;
   employer_id?: string;
+  employer_logo?: string;
+  hide_phone?: boolean;
   created_at?: string;
 }
 
@@ -67,16 +72,19 @@ const EmployerPage = () => {
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // New Job Modal State
+  // New Job Modal State (With 4 mandatory sections)
   const [isNewJobOpen, setIsNewJobOpen] = useState(false);
   const [newJob, setNewJob] = useState({
     title: "",
-    location: "İstanbul / Remote",
+    location: "İstanbul (Esenyurt)",
     workplace: "Aylık",
     type: "Tam Zamanlı",
-    experience: "3-5 years",
-    salary: "30.000 TL - 45.000 TL",
+    experience: "1-3 Yıl",
+    salary: "30.000 TL - 45.000 TL/ay",
     description: "",
+    responsibilities: "Günlük verilen görevlerin eksiksiz yapılması\nŞantiye ve iş güvenliği kurallarına uyulması\nEkip ile koordineli çalışma",
+    requirements: "En az 1 yıl saha deneyimi\nDisiplinli ve takım çalışmasına uygun\nAskerliğini yapmış veya tecilli",
+    benefits: "Tam SGK + Asgari Ücret Üzeri Maaş\nGünlük Yemek Kartı / Sıcak Yemek\nServis veya Yol Ücreti",
     tags: "Tam Zamanlı, Servis, Yemek, SGK",
   });
 
@@ -85,6 +93,17 @@ const EmployerPage = () => {
 
   // Candidate Profile Modal State
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateApplication | null>(null);
+
+  // Notification Modal State
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+  const [targetCandidate, setTargetCandidate] = useState<CandidateApplication | null>(null);
+  const [notificationForm, setNotificationForm] = useState({
+    title: "Tebrikler, Başvurunuz Kabul Edildi!",
+    message: "Başvurunuz incelendi ve olumlu sonuçlandı. Lütfen belirtilen gün ve saatte görüşmeye geliniz.",
+    interview_date: "",
+    interview_address: user?.company_address || "Şirket / Şantiye Merkezimiz",
+    include_date: true,
+  });
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -97,7 +116,6 @@ const EmployerPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch jobs posted by this employer (or all if employer_id matches user id/email)
       const { data: jobsData } = await supabase
         .from("jobs")
         .select("*")
@@ -107,7 +125,6 @@ const EmployerPage = () => {
       const loadedJobs = jobsData || [];
       setMyJobs(loadedJobs);
 
-      // 2. Fetch applications for these jobs
       const jobIds = loadedJobs.map((j) => j.id);
       if (jobIds.length > 0) {
         const { data: appsData } = await supabase
@@ -135,11 +152,15 @@ const EmployerPage = () => {
     fetchData();
   }, [user]);
 
-  // Create New Job
+  // Create New Job with 4 structured sections
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const tagsArr = newJob.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      const respArr = newJob.responsibilities.split("\n").map((s) => s.trim()).filter(Boolean);
+      const reqArr = newJob.requirements.split("\n").map((s) => s.trim()).filter(Boolean);
+      const benArr = newJob.benefits.split("\n").map((s) => s.trim()).filter(Boolean);
+
       const { data, error } = await supabase.from("jobs").insert({
         title: newJob.title,
         company: companyName,
@@ -149,8 +170,13 @@ const EmployerPage = () => {
         experience: newJob.experience,
         salary: newJob.salary,
         description: newJob.description,
+        responsibilities: respArr,
+        requirements: reqArr,
+        benefits: benArr,
         tags: tagsArr,
         employer_id: user?.id || user?.email,
+        employer_logo: (user as any)?.company_logo || (user as any)?.logo_url || "",
+        hide_phone: !!(user as any)?.hide_phone,
         time: "Yeni",
         applications: "0 Başvuru",
         logo_bg: "bg-indigo-600",
@@ -159,17 +185,7 @@ const EmployerPage = () => {
       if (error) throw error;
       if (data) setMyJobs((prev) => [data, ...prev]);
       setIsNewJobOpen(false);
-      setNewJob({
-        title: "",
-        location: "İstanbul / Remote",
-        workplace: "Remote",
-        type: "Full-time",
-        experience: "3-5 years",
-        salary: "90.000 TL - 140.000 TL",
-        description: "",
-        tags: "React, Node.js, TypeScript",
-      });
-      showToast("İş ilanınız başarıyla yayınlandı!");
+      showToast("İş ilanınız 4 bölümüyle başarıyla yayınlandı!");
     } catch (err: any) {
       showToast("İlan eklenirken hata: " + err.message);
     }
@@ -188,6 +204,9 @@ const EmployerPage = () => {
         experience: editingJob.experience,
         salary: editingJob.salary,
         description: editingJob.description,
+        responsibilities: Array.isArray(editingJob.responsibilities) ? editingJob.responsibilities : (editingJob.responsibilities as any)?.split("\n").map((s: string) => s.trim()),
+        requirements: Array.isArray(editingJob.requirements) ? editingJob.requirements : (editingJob.requirements as any)?.split("\n").map((s: string) => s.trim()),
+        benefits: Array.isArray(editingJob.benefits) ? editingJob.benefits : (editingJob.benefits as any)?.split("\n").map((s: string) => s.trim()),
         tags: Array.isArray(editingJob.tags) ? editingJob.tags : (editingJob.tags as any)?.split(",").map((t: string) => t.trim()),
       }).eq("id", editingJob.id);
 
@@ -228,6 +247,54 @@ const EmployerPage = () => {
     }
   };
 
+  // Open Notification Sender Modal
+  const handleOpenNotificationModal = (candidate: CandidateApplication, defaultTitle: string) => {
+    setTargetCandidate(candidate);
+    setNotificationForm({
+      title: defaultTitle,
+      message: defaultTitle.includes("Kabul")
+        ? "Tebrikler! Başvurduğunuz iş ilanına kabul edildiniz. Lütfen aşağıda belirtilen saat ve adreste hazır bulununuz."
+        : "Başvurunuz için teşekkür ederiz. Sizi ilk yüz yüze görüşmeye davet etmek istiyoruz.",
+      interview_date: "",
+      interview_address: user?.company_address || "Şirket / Şantiye Adresi",
+      include_date: true,
+    });
+    setNotificationModalOpen(true);
+  };
+
+  // Send Notification to Candidate
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetCandidate) return;
+
+    try {
+      const { error } = await supabase.from("notifications").insert({
+        user_id: targetCandidate.user_id || targetCandidate.applicant_email,
+        employer_id: user?.id || user?.email,
+        employer_name: companyName,
+        job_title: targetCandidate.jobs?.title || "İş İlanı",
+        title: notificationForm.title,
+        message: notificationForm.message,
+        interview_date: notificationForm.include_date ? notificationForm.interview_date : "",
+        interview_address: notificationForm.interview_address,
+        contact_phone: user?.phone || "",
+        is_phone_hidden: !!(user as any)?.hide_phone,
+        is_read: false,
+      });
+
+      if (error) throw error;
+
+      // Update candidate status to approved / invited
+      const newStatus = notificationForm.title.includes("Kabul") ? "Kabul Edildi" : "Mülakata Çağrıldı";
+      handleUpdateApplicationStatus(targetCandidate.id, newStatus);
+
+      setNotificationModalOpen(false);
+      showToast(`🔔 "${targetCandidate.applicant_name}" adayına bildirim başarıyla iletildi!`);
+    } catch (err: any) {
+      showToast("Bildirim gönderilemedi: " + err.message);
+    }
+  };
+
   return (
     <PortalLayout title="İşveren Yönetim Paneli">
       {/* Toast Notification */}
@@ -251,9 +318,17 @@ const EmployerPage = () => {
         {/* Company Header Banner */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
-              {companyName.substring(0, 2).toUpperCase()}
-            </div>
+            {(user as any)?.company_logo ? (
+              <img
+                src={(user as any).company_logo}
+                alt={companyName}
+                className="w-16 h-16 rounded-2xl object-cover border border-white/20 shadow-md shrink-0 bg-white"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+                {companyName.substring(0, 2).toUpperCase()}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-1">
                 <BuildingOfficeIcon className="h-4 w-4" />
@@ -272,7 +347,7 @@ const EmployerPage = () => {
               to="/profile"
               className="flex-1 md:flex-initial text-center px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold transition"
             >
-              Firma Profilini Düzenle
+              Firma ve Yasal Bilgiler
             </Link>
             <button
               onClick={() => setIsNewJobOpen(true)}
@@ -319,16 +394,14 @@ const EmployerPage = () => {
           </div>
         </div>
 
-        {/* ========================================================================= */}
         {/* TAB 1: POSTED JOBS */}
-        {/* ========================================================================= */}
         {activeTab === "jobs" && (
           <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-200 shadow-xs space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Aktif İlanlarınız</h2>
+                <h2 className="text-lg font-bold text-gray-900">Yayındaki İlanlarınız</h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Şirketiniz adına yayında olan açık iş pozisyonları ve başvuru sayıları.
+                  Açık pozisyonlarınız ve başvuru sayıları.
                 </p>
               </div>
             </div>
@@ -339,9 +412,6 @@ const EmployerPage = () => {
               <div className="text-center py-16 border border-dashed border-gray-300 rounded-3xl p-8 bg-gray-50/50">
                 <BriefcaseIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-base font-bold text-gray-900">Henüz bir ilan yayınlamadınız</h3>
-                <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-                  Açık pozisyonlarınızı yayınlayarak binlerce yetenekli adayın hemen başvurmasını sağlayın.
-                </p>
                 <button
                   onClick={() => setIsNewJobOpen(true)}
                   className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-500 transition"
@@ -378,9 +448,7 @@ const EmployerPage = () => {
 
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => {
-                          setActiveTab("applicants");
-                        }}
+                        onClick={() => setActiveTab("applicants")}
                         className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold flex items-center gap-1.5 transition"
                       >
                         <UsersIcon className="h-4 w-4" />
@@ -408,16 +476,14 @@ const EmployerPage = () => {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* TAB 2: APPLICANTS & CANDIDATE PROFILE CARDS */}
-        {/* ========================================================================= */}
+        {/* TAB 2: APPLICANTS & DIRECT CALL & NOTIFICATION SENDING */}
         {activeTab === "applicants" && (
           <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-200 shadow-xs space-y-6">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Aday Başvuruları</h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  İlanlarınıza başvuran adayların profillerini, yeteneklerini ve deneyimlerini inceleyin.
+                  İlanlarınıza başvuran adayları arayabilir, kabul edip bildirim gönderebilirsiniz.
                 </p>
               </div>
             </div>
@@ -426,9 +492,6 @@ const EmployerPage = () => {
               <div className="text-center py-16 border border-dashed border-gray-300 rounded-3xl p-8 bg-gray-50/50">
                 <UsersIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-base font-bold text-gray-900">Henüz başvuru yapılmadı</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Adaylar ilanlarınıza başvurdukça profilleri ve detaylı CV kartları burada listelenecektir.
-                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -437,9 +500,9 @@ const EmployerPage = () => {
                     <tr>
                       <th className="p-3">Aday Bilgisi</th>
                       <th className="p-3">Başvurulan Pozisyon</th>
-                      <th className="p-3">İletişim</th>
+                      <th className="p-3">Doğrudan İletişim</th>
                       <th className="p-3">Durum</th>
-                      <th className="p-3 text-right">Aday Kartı</th>
+                      <th className="p-3 text-right">İşlemler</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -454,22 +517,23 @@ const EmployerPage = () => {
                               </span>
                             )}
                           </div>
-                          <div className="text-indigo-600 font-medium text-xs">{app.applicant_title || "Yazılım / Tasarım"}</div>
+                          <div className="text-indigo-600 font-medium text-xs">{app.applicant_title || "İş Arayan"}</div>
                         </td>
                         <td className="p-3">
                           <div className="font-semibold text-gray-800">{app.jobs?.title || "İlan"}</div>
                           <div className="text-gray-400 text-[11px]">{new Date(app.created_at).toLocaleDateString("tr-TR")}</div>
                         </td>
                         <td className="p-3">
-                          <div className="text-gray-700 flex items-center gap-1">
-                            <EnvelopeIcon className="h-3.5 w-3.5 text-gray-400" />
-                            {app.applicant_email}
-                          </div>
-                          {app.applicant_phone && (
-                            <div className="text-gray-500 text-[11px] flex items-center gap-1 mt-0.5">
-                              <PhoneIcon className="h-3 w-3 text-gray-400" />
-                              {app.applicant_phone}
-                            </div>
+                          {app.applicant_phone ? (
+                            <a
+                              href={`tel:${app.applicant_phone}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 transition"
+                            >
+                              <PhoneIcon className="h-3.5 w-3.5 text-emerald-600" />
+                              {app.applicant_phone} (Ara)
+                            </a>
+                          ) : (
+                            <span className="text-gray-400">-</span>
                           )}
                         </td>
                         <td className="p-3">
@@ -485,13 +549,21 @@ const EmployerPage = () => {
                             <option value="Reddedildi">❌ Reddedildi</option>
                           </select>
                         </td>
-                        <td className="p-3 text-right">
+                        <td className="p-3 text-right space-x-2">
+                          <button
+                            onClick={() => handleOpenNotificationModal(app, "Tebrikler, Başvurunuz Kabul Edildi!")}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition shadow-xs"
+                            title="Adaya Bildirim Gönder"
+                          >
+                            <BellIcon className="h-3.5 w-3.5" />
+                            Bildirim Gönder
+                          </button>
                           <button
                             onClick={() => setSelectedCandidate(app)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-500 shadow-xs transition"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-500 transition shadow-xs"
                           >
-                            <EyeIcon className="h-4 w-4" />
-                            Profili İncele
+                            <EyeIcon className="h-3.5 w-3.5" />
+                            Kartı İncele
                           </button>
                         </td>
                       </tr>
@@ -504,9 +576,7 @@ const EmployerPage = () => {
         )}
       </div>
 
-      {/* ========================================================================= */}
       {/* CANDIDATE DETAIL PROFILE CARD MODAL */}
-      {/* ========================================================================= */}
       <Transition.Root show={!!selectedCandidate} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setSelectedCandidate(null)}>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
@@ -520,43 +590,45 @@ const EmployerPage = () => {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{selectedCandidate?.applicant_name}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-sm font-semibold text-indigo-600">{selectedCandidate?.applicant_title || "İş Arayan"}</p>
-                        {selectedCandidate?.is_disabled && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[11px] flex items-center gap-1">
-                            ♿ Engelli Aday ({selectedCandidate?.disability_type || "Belirtildi"})
-                          </span>
-                        )}
-                      </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{selectedCandidate?.jobs?.title} Pozisyonu Başvurusu</p>
+                      <p className="text-sm font-semibold text-indigo-600">{selectedCandidate?.applicant_title || "İş Arayan"}</p>
+                      {selectedCandidate?.is_disabled && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[11px] flex items-center gap-1">
+                          ♿ Engelli Aday ({selectedCandidate?.disability_type || "Belirtildi"})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedCandidate(null)}
-                  className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-                >
+                <button onClick={() => setSelectedCandidate(null)} className="p-1.5 text-gray-400 hover:text-gray-700">
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
 
               {selectedCandidate && (
                 <div className="mt-6 space-y-6 text-xs">
-                  {/* Contact Info Bar */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">
+                  {/* Direct Call Button Bar */}
+                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <EnvelopeIcon className="h-4 w-4 text-indigo-600" />
-                      <span className="font-semibold text-gray-800">{selectedCandidate.applicant_email}</span>
+                      <PhoneIcon className="h-5 w-5 text-emerald-600" />
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-emerald-800 block">Aday Telefon Numarası</span>
+                        <span className="text-sm font-bold text-emerald-950 font-mono">{selectedCandidate.applicant_phone || "Belirtilmedi"}</span>
+                      </div>
                     </div>
                     {selectedCandidate.applicant_phone && (
-                      <div className="flex items-center gap-2">
-                        <PhoneIcon className="h-4 w-4 text-indigo-600" />
-                        <span className="font-semibold text-gray-800">{selectedCandidate.applicant_phone}</span>
-                      </div>
+                      <a
+                        href={`tel:${selectedCandidate.applicant_phone}`}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition"
+                      >
+                        <PhoneIcon className="h-4 w-4" />
+                        Hemen Telefonla Ara
+                      </a>
                     )}
                   </div>
 
                   {/* Bio / Summary */}
                   <div>
-                    <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Ön Yazı / Hakkında</h4>
+                    <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Hakkında / İş Deneyimi Özeti</h4>
                     <div className="p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100 text-gray-700 leading-relaxed text-xs">
                       {selectedCandidate.applicant_bio || "Aday tarafından henüz bir ön yazı eklenmemiştir."}
                     </div>
@@ -571,22 +643,6 @@ const EmployerPage = () => {
                           <span key={i} className="px-3 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg border border-indigo-100">
                             {s}
                           </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Experience History */}
-                  {selectedCandidate.applicant_experience && selectedCandidate.applicant_experience.length > 0 && (
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Çalışma Geçmişi / Deneyim</h4>
-                      <div className="space-y-2">
-                        {selectedCandidate.applicant_experience.map((exp: any, i: number) => (
-                          <div key={i} className="p-3 bg-white border border-gray-200 rounded-xl">
-                            <div className="font-bold text-gray-900">{exp.role || exp.title}</div>
-                            <div className="text-gray-500 font-medium">{exp.company} • {exp.period || exp.years}</div>
-                            {exp.description && <p className="text-gray-600 mt-1 text-[11px]">{exp.description}</p>}
-                          </div>
                         ))}
                       </div>
                     </div>
@@ -626,53 +682,34 @@ const EmployerPage = () => {
                     </div>
                   )}
 
-                  {/* Education */}
-                  {selectedCandidate.applicant_education && selectedCandidate.applicant_education.length > 0 && (
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Eğitim Bilgileri</h4>
-                      <div className="space-y-2">
-                        {selectedCandidate.applicant_education.map((edu: any, i: number) => (
-                          <div key={i} className="p-3 bg-white border border-gray-200 rounded-xl flex items-center gap-2">
-                            <AcademicCapIcon className="h-5 w-5 text-indigo-600 shrink-0" />
-                            <div>
-                              <div className="font-bold text-gray-900">{edu.school || edu.university}</div>
-                              <div className="text-gray-500">{edu.degree || edu.department} • {edu.year}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions & Status Change */}
+                  {/* Actions & Notification */}
                   <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-700">Durum:</span>
-                      <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-200">
-                        {selectedCandidate.status || "Beklemede"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleUpdateApplicationStatus(selectedCandidate.id, "Mülakata Çağrıldı")}
-                        className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-xs"
-                      >
-                        📞 Mülakata Çağır
-                      </button>
-                      <button
-                        onClick={() => handleUpdateApplicationStatus(selectedCandidate.id, "Kabul Edildi")}
-                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-xs"
-                      >
-                        ✅ Kabul Et
-                      </button>
-                      <button
-                        onClick={() => handleUpdateApplicationStatus(selectedCandidate.id, "Reddedildi")}
-                        className="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold transition"
-                      >
-                        ❌ Reddet
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedCandidate(null);
+                        handleOpenNotificationModal(selectedCandidate, "Tebrikler, Başvurunuz Kabul Edildi!");
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-xs flex items-center gap-1.5"
+                    >
+                      <BellIcon className="h-4 w-4" />
+                      Kabul Et & Bildirim Gönder
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedCandidate(null);
+                        handleOpenNotificationModal(selectedCandidate, "Mülakat ve Görüşme Daveti");
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-xs flex items-center gap-1.5"
+                    >
+                      <CalendarDaysIcon className="h-4 w-4" />
+                      Mülakata Çağır
+                    </button>
+                    <button
+                      onClick={() => handleUpdateApplicationStatus(selectedCandidate.id, "Reddedildi")}
+                      className="px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold transition"
+                    >
+                      Reddet
+                    </button>
                   </div>
                 </div>
               )}
@@ -681,14 +718,123 @@ const EmployerPage = () => {
         </Dialog>
       </Transition.Root>
 
-      {/* ========================================================================= */}
-      {/* NEW JOB MODAL */}
-      {/* ========================================================================= */}
+      {/* SEND NOTIFICATION MODAL */}
+      <Transition.Root show={notificationModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setNotificationModalOpen(false)}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-lg bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                  <BellIcon className="h-5 w-5 text-indigo-600" />
+                  Adaya Bildirim Gönder
+                </h3>
+                <button onClick={() => setNotificationModalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {targetCandidate && (
+                <form onSubmit={handleSendNotification} className="mt-4 space-y-4 text-xs">
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <span className="text-[11px] text-gray-500 block">Alıcı Aday:</span>
+                    <span className="font-bold text-gray-900 text-sm">{targetCandidate.applicant_name}</span>
+                    <span className="text-gray-500 text-xs ml-2">({targetCandidate.jobs?.title})</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Bildirim Başlığı *</label>
+                    <input
+                      type="text"
+                      required
+                      value={notificationForm.title}
+                      onChange={(e) => setNotificationForm({ ...notificationForm, title: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600 font-bold text-indigo-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Bildirim Mesajı *</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={notificationForm.message}
+                      onChange={(e) => setNotificationForm({ ...notificationForm, message: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                      placeholder="Adaya iletilecek özel mesaj..."
+                    />
+                  </div>
+
+                  {/* Optional Interview Date & Time */}
+                  <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="include_date"
+                        checked={notificationForm.include_date}
+                        onChange={(e) => setNotificationForm({ ...notificationForm, include_date: e.target.checked })}
+                        className="h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                      />
+                      <label htmlFor="include_date" className="font-bold text-indigo-950 text-xs cursor-pointer">
+                        Görüşme Tarih ve Saati Ekle (Opsiyonel)
+                      </label>
+                    </div>
+
+                    {notificationForm.include_date && (
+                      <div className="space-y-2 pt-1 pl-6">
+                        <div>
+                          <label className="block text-gray-700 font-medium mb-1">Tarih ve Saat</label>
+                          <input
+                            type="datetime-local"
+                            value={notificationForm.interview_date}
+                            onChange={(e) => setNotificationForm({ ...notificationForm, interview_date: e.target.value })}
+                            className="w-full rounded-xl border border-gray-300 p-2 text-xs bg-white focus:border-indigo-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-gray-700 font-medium mb-1">Görüşme / Şantiye Adresi</label>
+                          <input
+                            type="text"
+                            value={notificationForm.interview_address}
+                            onChange={(e) => setNotificationForm({ ...notificationForm, interview_address: e.target.value })}
+                            className="w-full rounded-xl border border-gray-300 p-2 text-xs bg-white focus:border-indigo-600"
+                            placeholder="Esenyurt Şantiyesi, No: 12"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setNotificationModalOpen(false)}
+                      className="flex-1 py-2.5 rounded-xl border border-gray-300 font-semibold text-gray-700"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-md shadow-indigo-200 flex items-center justify-center gap-1.5"
+                    >
+                      <PaperAirplaneIcon className="h-4 w-4" />
+                      Bildirimi Gönder
+                    </button>
+                  </div>
+                </form>
+              )}
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      {/* NEW JOB MODAL (WITH 4 MANDATORY SECTIONS) */}
       <Transition.Root show={isNewJobOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setIsNewJobOpen(false)}>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <Dialog.Panel className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <Dialog.Panel className="w-full max-w-2xl bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between pb-3 border-b border-gray-100">
                 <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                   <PlusIcon className="h-5 w-5 text-indigo-600" />
@@ -700,34 +846,25 @@ const EmployerPage = () => {
               </div>
 
               <form onSubmit={handleCreateJob} className="mt-4 space-y-4 text-xs">
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Pozisyon / İlan Başlığı *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Örn: Temizlik Görevlisi, İnşaat Ustası, Garson, Şoför"
-                    value={newJob.title}
-                    onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-gray-700 uppercase mb-1">Şirket Adı</label>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Pozisyon / İlan Başlığı *</label>
                     <input
                       type="text"
-                      disabled
-                      value={companyName}
-                      className="w-full rounded-xl border border-gray-200 p-2.5 text-xs bg-gray-50 text-gray-600 font-bold"
+                      required
+                      placeholder="Örn: Kalıp Ustası, Temizlik Personeli"
+                      value={newJob.title}
+                      onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 uppercase mb-1">Lokasyon</label>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Şehir / İlçe *</label>
                     <input
                       type="text"
-                      placeholder="Örn: İstanbul / Remote"
+                      required
+                      placeholder="Örn: İstanbul (Esenyurt)"
                       value={newJob.location}
                       onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
                       className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
@@ -737,7 +874,7 @@ const EmployerPage = () => {
 
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Şekli</label>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Periyodu</label>
                     <select
                       value={newJob.workplace}
                       onChange={(e) => setNewJob({ ...newJob, workplace: e.target.value })}
@@ -752,7 +889,7 @@ const EmployerPage = () => {
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Türü</label>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Şekli</label>
                     <select
                       value={newJob.type}
                       onChange={(e) => setNewJob({ ...newJob, type: e.target.value })}
@@ -771,47 +908,75 @@ const EmployerPage = () => {
                       onChange={(e) => setNewJob({ ...newJob, experience: e.target.value })}
                       className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                     >
-                      <option value="1-3 years">1-3 Yıl</option>
-                      <option value="3-5 years">3-5 Yıl</option>
-                      <option value="5+ years">5+ Yıl</option>
+                      <option value="Deneyimsiz">Deneyimsiz</option>
+                      <option value="1-3 Yıl">1-3 Yıl</option>
+                      <option value="3-5 Yıl">3-5 Yıl</option>
+                      <option value="5+ Yıl Usta">5+ Yıl Usta</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Maaş Bilgisi</label>
+                  <label className="block font-bold text-gray-700 uppercase mb-1">Maaş / Ücret Bilgisi *</label>
                   <input
                     type="text"
-                    placeholder="Örn: 30.000 TL - 45.000 TL/ay"
+                    required
+                    placeholder="Örn: 30.000 TL - 45.000 TL/ay veya 1.500 TL/günlük"
                     value={newJob.salary}
                     onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Etiketler (Virgülle ayırın)</label>
-                  <input
-                    type="text"
-                    placeholder="Tam Zamanlı, Servis, Yemek, SGK"
-                    value={newJob.tags}
-                    onChange={(e) => setNewJob({ ...newJob, tags: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
-                  />
+                {/* 4 STRUCTURED SECTIONS */}
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="block font-bold text-indigo-950 uppercase mb-1">1. Pozisyon Hakkında (İş Tanımı) *</label>
+                    <textarea
+                      rows={2}
+                      required
+                      placeholder="Pozisyonun genel tanımı ve şantiye/işyeri hakkında bilgi..."
+                      value={newJob.description}
+                      onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-indigo-950 uppercase mb-1">2. Sorumluluklar (Her satıra bir madde yazın)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Kalıp bağlama ve demir montajı yapılması&#10;İş güvenliği kurallarına uyulması"
+                      value={newJob.responsibilities}
+                      onChange={(e) => setNewJob({ ...newJob, responsibilities: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-indigo-950 uppercase mb-1">3. Aranan Nitelikler (Her satıra bir madde yazın)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="En az 2 yıl kalıpçılık tecrübesi&#10;Takım çalışmasına yatkın"
+                      value={newJob.requirements}
+                      onChange={(e) => setNewJob({ ...newJob, requirements: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-indigo-950 uppercase mb-1">4. Yan Haklar & Avantajlar (Her satıra bir madde yazın)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Tam SGK + Dolgun Maaş&#10;Sıcak Yemek / Yemek Kartı&#10;Yatakhane ve Servis"
+                      value={newJob.benefits}
+                      onChange={(e) => setNewJob({ ...newJob, benefits: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">İş Tanımı ve Aranan Nitelikler</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Pozisyon hakkında açıklamalar..."
-                    value={newJob.description}
-                    onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-3">
                   <button
                     type="button"
                     onClick={() => setIsNewJobOpen(false)}
@@ -832,9 +997,7 @@ const EmployerPage = () => {
         </Dialog>
       </Transition.Root>
 
-      {/* ========================================================================= */}
       {/* EDIT JOB MODAL */}
-      {/* ========================================================================= */}
       <Transition.Root show={!!editingJob} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setEditingJob(null)}>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
@@ -870,9 +1033,9 @@ const EmployerPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Şekli</label>
+                      <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Periyodu</label>
                       <select
                         value={editingJob.workplace}
                         onChange={(e) => setEditingJob({ ...editingJob, workplace: e.target.value })}
@@ -883,19 +1046,6 @@ const EmployerPage = () => {
                         <option value="Saatlik">Saatlik</option>
                         <option value="Haftalık">Haftalık</option>
                         <option value="Uzaktan Çalışma">Uzaktan Çalışma</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-gray-700 uppercase mb-1">Çalışma Türü</label>
-                      <select
-                        value={editingJob.type}
-                        onChange={(e) => setEditingJob({ ...editingJob, type: e.target.value })}
-                        className="w-full rounded-xl border border-gray-300 p-2 text-xs"
-                      >
-                        <option value="Tam Zamanlı">Tam Zamanlı</option>
-                        <option value="Yarı Zamanlı">Yarı Zamanlı</option>
-                        <option value="Yevmiyeli / Dönemsel">Yevmiyeli / Dönemsel</option>
                       </select>
                     </div>
 
@@ -911,7 +1061,7 @@ const EmployerPage = () => {
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 uppercase mb-1">İş Tanımı ve Açıklama</label>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">İş Tanımı</label>
                     <textarea
                       rows={3}
                       value={editingJob.description || ""}

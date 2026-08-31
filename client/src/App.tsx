@@ -11,7 +11,6 @@ const ForgotPasswordPage = lazy(
 );
 const MyJobsPage = lazy(() => import("@/pages/MyJobsPage"));
 const SavedJobsPage = lazy(() => import("@/pages/SavedJobsPage"));
-const MessagesPage = lazy(() => import("@/pages/MessagesPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AdminPage = lazy(() => import("@/pages/AdminPage"));
 const EmployerPage = lazy(() => import("@/pages/EmployerPage"));
@@ -30,7 +29,6 @@ function App() {
             <Route path="/admin" element={isSuperAdmin ? <AdminPage /> : <Navigate to="/" />} />
             <Route path="/my-jobs" element={isEmployer ? <Navigate to="/employer" /> : <MyJobsPage />} />
             <Route path="/saved-jobs" element={isEmployer ? <Navigate to="/employer" /> : <SavedJobsPage />} />
-            <Route path="/messages" element={<MessagesPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/login" element={<Navigate to={isSuperAdmin ? "/admin" : isEmployer ? "/employer" : "/"} />} />
             <Route path="/register" element={<Navigate to={isSuperAdmin ? "/admin" : isEmployer ? "/employer" : "/"} />} />
@@ -47,7 +45,6 @@ function App() {
             <Route path="/my-jobs" element={<Navigate to="/login" />} />
             <Route path="/saved-jobs" element={<Navigate to="/login" />} />
             <Route path="/profile" element={<Navigate to="/login" />} />
-            <Route path="/messages" element={<Navigate to="/login" />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

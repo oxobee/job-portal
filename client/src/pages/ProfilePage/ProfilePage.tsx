@@ -10,6 +10,8 @@ import {
   DocumentTextIcon,
   UserGroupIcon,
   HeartIcon,
+  EyeSlashIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/providers";
 import { supabase } from "@/core/supabase";
@@ -38,14 +40,20 @@ const ProfilePage = () => {
   });
   const [newSkillInput, setNewSkillInput] = useState("");
 
-  // Employer Profile Form State
+  // Employer Profile Form State (With Legal Info and Privacy)
   const [employerForm, setEmployerForm] = useState({
     company_name: "",
-    company_sector: "",
+    tax_office: "",
+    tax_number: "",
+    company_legal_type: "Limited Şirket (Ltd. Şti.)",
+    authorized_person: "",
+    company_sector: "İnşaat & Taahhüt",
     company_size: "10-50 Çalışan",
     phone: "",
+    hide_phone: false,
     company_website: "",
     company_address: "",
+    company_logo: "",
     bio: "",
   });
 
@@ -54,11 +62,17 @@ const ProfilePage = () => {
       if (isEmployer) {
         setEmployerForm({
           company_name: user.company_name || user.full_name || "",
+          tax_office: (user as any).tax_office || "Kadıköy Vergi Dairesi",
+          tax_number: (user as any).tax_number || "1234567890",
+          company_legal_type: (user as any).company_legal_type || "Limited Şirket (Ltd. Şti.)",
+          authorized_person: (user as any).authorized_person || user.full_name || "",
           company_sector: user.company_sector || "İnşaat & Taahhüt",
           company_size: user.company_size || "10-50 Çalışan",
           phone: user.phone || "",
+          hide_phone: !!(user as any).hide_phone,
           company_website: user.company_website || "",
           company_address: user.company_address || user.location || "İstanbul, Türkiye",
+          company_logo: (user as any).company_logo || (user as any).logo_url || "",
           bio: user.bio || "",
         });
       } else {
@@ -71,8 +85,8 @@ const ProfilePage = () => {
           bio: user.bio || "",
           is_disabled: !!user.is_disabled,
           disability_type: user.disability_type || "",
-          document_name: user.document_name || "",
-          document_url: user.document_url || "",
+          document_name: (user as any).document_name || "",
+          document_url: (user as any).document_url || "",
           skills: user.skills && Array.isArray(user.skills) && user.skills.length > 0
             ? user.skills
             : ["Kalıp Bağlama", "Gazaltı Kaynağı", "Forklift Operatörlüğü", "B Sınıfı Ehliyet"],
@@ -86,8 +100,8 @@ const ProfilePage = () => {
                   description: "Şantiyede kolon, perde ve döşeme kalıp bağlama işleri.",
                 },
               ],
-          references_list: user.references_list && user.references_list.length > 0
-            ? user.references_list
+          references_list: (user as any).references_list && (user as any).references_list.length > 0
+            ? (user as any).references_list
             : [
                 {
                   name: "Hasan Usta (Şantiye Şefi)",
@@ -150,11 +164,18 @@ const ProfilePage = () => {
         const { error } = await supabase.from("profiles").update({
           full_name: employerForm.company_name,
           company_name: employerForm.company_name,
+          tax_office: employerForm.tax_office,
+          tax_number: employerForm.tax_number,
+          company_legal_type: employerForm.company_legal_type,
+          authorized_person: employerForm.authorized_person,
           company_sector: employerForm.company_sector,
           company_size: employerForm.company_size,
           phone: employerForm.phone,
+          hide_phone: employerForm.hide_phone,
           company_website: employerForm.company_website,
           company_address: employerForm.company_address,
+          company_logo: employerForm.company_logo,
+          logo_url: employerForm.company_logo,
           bio: employerForm.bio,
         }).eq("id", user.id);
 
@@ -168,6 +189,7 @@ const ProfilePage = () => {
         phone: employerForm.phone,
         company_website: employerForm.company_website,
         company_address: employerForm.company_address,
+        company_logo: employerForm.company_logo,
         bio: employerForm.bio,
       });
       setSaved(true);
@@ -233,7 +255,7 @@ const ProfilePage = () => {
     });
   };
 
-  // Mock / Local Document Upload handler
+  // File Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -245,17 +267,40 @@ const ProfilePage = () => {
     }
   };
 
+  // Employer Logo Upload
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEmployerForm({
+          ...employerForm,
+          company_logo: reader.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
-    <PortalLayout title={isEmployer ? "Firma Profilim" : "İş Arayan Profilim ve Özgeçmiş"}>
+    <PortalLayout title={isEmployer ? "Firma Profilim ve Yasal Bilgiler" : "İş Arayan Profilim ve Özgeçmiş"}>
       <div className="w-full max-w-4xl mx-auto space-y-6 pb-20">
         {/* Profile Card Header */}
         <div className="bg-white rounded-3xl border border-gray-200 shadow-xs p-6 md:p-8">
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100">
-            <div className="w-20 h-20 rounded-2xl bg-indigo-600 text-white text-2xl font-black flex items-center justify-center shadow-lg shadow-indigo-200">
-              {isEmployer
-                ? (employerForm.company_name?.substring(0, 2).toUpperCase() || "FR")
-                : (seekerForm.full_name?.substring(0, 2).toUpperCase() || "AD")}
-            </div>
+            {isEmployer && employerForm.company_logo ? (
+              <img
+                src={employerForm.company_logo}
+                alt={employerForm.company_name}
+                className="w-20 h-20 rounded-2xl object-cover border border-gray-200 shadow-md"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-indigo-600 text-white text-2xl font-black flex items-center justify-center shadow-lg shadow-indigo-200">
+                {isEmployer
+                  ? (employerForm.company_name?.substring(0, 2).toUpperCase() || "FR")
+                  : (seekerForm.full_name?.substring(0, 2).toUpperCase() || "AD")}
+              </div>
+            )}
             <div className="text-center sm:text-left flex-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -264,7 +309,7 @@ const ProfilePage = () => {
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                   isEmployer ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"
                 }`}>
-                  {isEmployer ? "İşveren / İK Hesabı" : "İş Arayan Hesabı"}
+                  {isEmployer ? "İş Veren Hesabı" : "İş Arayan Hesabı"}
                 </span>
 
                 {!isEmployer && seekerForm.is_disabled && (
@@ -274,7 +319,7 @@ const ProfilePage = () => {
                 )}
               </div>
               <p className="text-sm font-semibold text-indigo-600 mt-0.5">
-                {isEmployer ? employerForm.company_sector : seekerForm.title}
+                {isEmployer ? `${employerForm.company_legal_type} • ${employerForm.company_sector}` : seekerForm.title}
               </p>
               <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1 mt-1">
                 <MapPinIcon className="h-3.5 w-3.5" />
@@ -286,39 +331,131 @@ const ProfilePage = () => {
           {saved && (
             <div className="mt-5 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-800 flex items-center gap-2">
               <CheckIcon className="h-4 w-4 text-emerald-600" />
-              Profil bilgileriniz başarıyla güncellendi!
+              Profil bilgileriniz başarıyla kaydedildi!
             </div>
           )}
 
           {/* ========================================================================= */}
-          {/* EMPLOYER PROFILE FORM */}
+          {/* EMPLOYER PROFILE FORM (YASAL BİLGİLER + LOGO + GİZLİLİK) */}
           {/* ========================================================================= */}
           {isEmployer ? (
             <form onSubmit={handleSaveEmployer} className="mt-6 space-y-6 text-xs">
+              {/* Logo Upload Section */}
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
+                <label className="block font-bold text-gray-700 uppercase flex items-center gap-1.5">
+                  <PhotoIcon className="h-4 w-4 text-indigo-600" />
+                  Firma Logosu
+                </label>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {employerForm.company_logo ? (
+                    <img
+                      src={employerForm.company_logo}
+                      alt="Logo"
+                      className="w-16 h-16 rounded-xl object-cover border border-gray-200 bg-white"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-white border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">
+                      Logo Yok
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2 w-full">
+                    <input
+                      type="text"
+                      placeholder="Logo Resim URL'si (veya aşağıdan yükleyin)"
+                      value={employerForm.company_logo}
+                      onChange={(e) => setEmployerForm({ ...employerForm, company_logo: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-2 text-xs bg-white focus:border-indigo-600"
+                    />
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 cursor-pointer transition text-xs">
+                      <ArrowUpTrayIcon className="h-3.5 w-3.5" />
+                      Bilgisayardan Logo Seç
+                      <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Legal Info Fields */}
+              <div className="bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100 space-y-4">
+                <h3 className="font-bold text-indigo-950 uppercase tracking-wider text-xs">
+                  🏛️ Yasal ve Resmi Şirket Bilgileri
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Firma Ticari Ünvanı *</label>
+                    <input
+                      type="text"
+                      required
+                      value={employerForm.company_name}
+                      onChange={(e) => setEmployerForm({ ...employerForm, company_name: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 bg-white"
+                      placeholder="Örn: Özdemir İnşaat Taahhüt San. ve Tic. Ltd. Şti."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Şirket Türü</label>
+                    <select
+                      value={employerForm.company_legal_type}
+                      onChange={(e) => setEmployerForm({ ...employerForm, company_legal_type: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 bg-white"
+                    >
+                      <option value="Limited Şirket (Ltd. Şti.)">Limited Şirket (Ltd. Şti.)</option>
+                      <option value="Anonim Şirket (A.Ş.)">Anonim Şirket (A.Ş.)</option>
+                      <option value="Şahıs Şirketi">Şahıs Şirketi</option>
+                      <option value="Kolektif / Komandit">Kolektif / Komandit</option>
+                      <option value="Şahıs / Bireysel İşveren">Şahıs / Bireysel İşveren</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Vergi Dairesi</label>
+                    <input
+                      type="text"
+                      value={employerForm.tax_office}
+                      onChange={(e) => setEmployerForm({ ...employerForm, tax_office: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 bg-white"
+                      placeholder="Örn: Kadıköy Vergi Dairesi"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Vergi Numarası (VKN / TCKN)</label>
+                    <input
+                      type="text"
+                      value={employerForm.tax_number}
+                      onChange={(e) => setEmployerForm({ ...employerForm, tax_number: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 bg-white font-mono"
+                      placeholder="10 Haneli VKN"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Şirket Yetkilisi Adı Soyadı</label>
+                    <input
+                      type="text"
+                      value={employerForm.authorized_person}
+                      onChange={(e) => setEmployerForm({ ...employerForm, authorized_person: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 bg-white"
+                      placeholder="Yetkili Adı Soyadı"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 uppercase mb-1">Faaliyet Sektörü</label>
+                    <input
+                      type="text"
+                      value={employerForm.company_sector}
+                      onChange={(e) => setEmployerForm({ ...employerForm, company_sector: e.target.value })}
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 bg-white"
+                      placeholder="Örn: İnşaat, Temizlik, Lojistik, Restoran"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact & Phone Privacy */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Firma / Kurum Adı *</label>
-                  <input
-                    type="text"
-                    required
-                    value={employerForm.company_name}
-                    onChange={(e) => setEmployerForm({ ...employerForm, company_name: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600"
-                    placeholder="Örn: Özdemir İnşaat & Taahhüt"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Faaliyet Sektörü</label>
-                  <input
-                    type="text"
-                    value={employerForm.company_sector}
-                    onChange={(e) => setEmployerForm({ ...employerForm, company_sector: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600"
-                    placeholder="Örn: İnşaat, Temizlik, Lojistik, Restoran"
-                  />
-                </div>
-
                 <div>
                   <label className="block font-bold text-gray-700 uppercase mb-1">İletişim Telefon Numarası *</label>
                   <input
@@ -327,45 +464,39 @@ const ProfilePage = () => {
                     value={employerForm.phone}
                     onChange={(e) => setEmployerForm({ ...employerForm, phone: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600"
-                    placeholder="+90 555 000 00 00"
+                    placeholder="0555 000 00 00"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Çalışan Sayısı</label>
-                  <select
-                    value={employerForm.company_size}
-                    onChange={(e) => setEmployerForm({ ...employerForm, company_size: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600"
-                  >
-                    <option value="1-10">1 - 10 Çalışan</option>
-                    <option value="10-50">10 - 50 Çalışan</option>
-                    <option value="50-250">50 - 250 Çalışan</option>
-                    <option value="250+">250+ Çalışan</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Firma Web Sitesi</label>
-                  <input
-                    type="url"
-                    value={employerForm.company_website}
-                    onChange={(e) => setEmployerForm({ ...employerForm, company_website: e.target.value })}
-                    className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600"
-                    placeholder="https://sirketiniz.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 uppercase mb-1">Firma Adresi / Şehir</label>
+                  <label className="block font-bold text-gray-700 uppercase mb-1">Firma Adresi / Şehir *</label>
                   <input
                     type="text"
+                    required
                     value={employerForm.company_address}
                     onChange={(e) => setEmployerForm({ ...employerForm, company_address: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600"
                     placeholder="Esenyurt, İstanbul"
                   />
                 </div>
+              </div>
+
+              {/* Phone Privacy Checkbox */}
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="hide_phone"
+                  checked={employerForm.hide_phone}
+                  onChange={(e) => setEmployerForm({ ...employerForm, hide_phone: e.target.checked })}
+                  className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-600 cursor-pointer mt-0.5"
+                />
+                <label htmlFor="hide_phone" className="text-xs font-bold text-amber-900 cursor-pointer flex items-center gap-1.5 flex-wrap">
+                  <EyeSlashIcon className="h-4 w-4 text-amber-600" />
+                  Telefon Numaramı İlanlarda Gizle
+                  <span className="text-[11px] font-normal text-amber-800 block w-full mt-0.5">
+                    (İş arayanlar numaranızı <code>0532 *** ** 12</code> olarak yıldızlı görür. Adaylara sadece siz telefonla ulaşabilirsiniz.)
+                  </span>
+                </label>
               </div>
 
               <div>
@@ -383,9 +514,9 @@ const ProfilePage = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95 disabled:opacity-50"
+                  className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95 disabled:opacity-50 text-sm"
                 >
-                  {isSubmitting ? "Kaydediliyor..." : "Firma Bilgilerini Kaydet"}
+                  {isSubmitting ? "Kaydediliyor..." : "Firma ve Yasal Bilgileri Kaydet"}
                 </button>
               </div>
             </form>
@@ -445,7 +576,7 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              {/* Disability Status (Engelli Aday Alanı) */}
+              {/* Disability Status */}
               <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200/80 space-y-3">
                 <div className="flex items-center gap-3">
                   <input
@@ -474,9 +605,6 @@ const ProfilePage = () => {
                       placeholder="Örn: Ortopedik (%40), İşitme engeli, Süreğen / Kronik vb."
                       className="w-full rounded-xl border border-purple-200 p-2.5 text-xs bg-white focus:border-purple-600"
                     />
-                    <p className="text-[11px] text-purple-700">
-                      * Bu bilgi başvurularınızda işverenlere özel rozet ile iletilecek ve engelli kadrolarında öncelik sağlayacaktır.
-                    </p>
                   </div>
                 )}
               </div>
@@ -493,7 +621,7 @@ const ProfilePage = () => {
                 />
               </div>
 
-              {/* Skills Tag Management (Mavi Yaka / İşçi Yetenekleri) */}
+              {/* Skills */}
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
                 <div className="flex justify-between items-center mb-2">
                   <label className="font-bold text-gray-700 uppercase">
@@ -618,7 +746,7 @@ const ProfilePage = () => {
                 ))}
               </div>
 
-              {/* References Section (Referanslar) */}
+              {/* References Section */}
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -626,9 +754,6 @@ const ProfilePage = () => {
                       <UserGroupIcon className="h-4 w-4 text-indigo-600" />
                       Referanslar (Geçmişte Birlikte Çalıştığınız Kişiler)
                     </label>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
-                      Sizi işverene tavsiye edebilecek usta, şef veya eski işvereninizin iletişim bilgileri.
-                    </p>
                   </div>
                   <button
                     type="button"
@@ -688,14 +813,11 @@ const ProfilePage = () => {
                 ))}
               </div>
 
-              {/* Document / CV Dropzone Area (Belge Yükleme Alanı - Opsiyonel) */}
+              {/* Document / CV Dropzone Area */}
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 space-y-3">
                 <label className="block font-bold text-gray-700 uppercase">
                   CV / Ustalık Belgesi / Sertifika Yükleme (İsteğe Bağlı)
                 </label>
-                <p className="text-[11px] text-gray-400">
-                  Varsa ustalık belgesi, SRC, forklift ehliyeti veya CV dosyanızı yükleyebilirsiniz (Zorunlu değildir).
-                </p>
 
                 {seekerForm.document_name ? (
                   <div className="p-3 bg-white border border-emerald-200 rounded-xl flex items-center justify-between">
