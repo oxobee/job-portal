@@ -88,9 +88,9 @@ const AdminPage = () => {
     workplace: "Remote",
     type: "Full-time",
     experience: "3-5 years",
-    salary: "$90k - $120k/yr",
+    salary: "30.000 TL - 45.000 TL",
     description: "",
-    tags: "React, Node.js, Remote",
+    tags: "Tam Zamanlı, Servis, Yemek, SGK",
   });
 
   // Users State
@@ -1018,7 +1018,7 @@ const AdminPage = () => {
                   <input
                     type="text"
                     required
-                    placeholder="Örn: Senior Frontend Developer"
+                    placeholder="Örn: Temizlik Görevlisi, İnşaat Ustası, Şoför"
                     value={newJobData.title}
                     onChange={(e) => setNewJobData({ ...newJobData, title: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
@@ -1095,7 +1095,7 @@ const AdminPage = () => {
                   <label className="block font-bold text-gray-700 uppercase mb-1">Maaş Bilgisi</label>
                   <input
                     type="text"
-                    placeholder="Örn: 90.000 TL - 130.000 TL"
+                    placeholder="Örn: 30.000 TL - 45.000 TL/ay"
                     value={newJobData.salary}
                     onChange={(e) => setNewJobData({ ...newJobData, salary: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
@@ -1106,7 +1106,7 @@ const AdminPage = () => {
                   <label className="block font-bold text-gray-700 uppercase mb-1">Etiketler (Virgülle ayırın)</label>
                   <input
                     type="text"
-                    placeholder="React, Node.js, Remote"
+                    placeholder="Tam Zamanlı, Servis, Yemek, SGK"
                     value={newJobData.tags}
                     onChange={(e) => setNewJobData({ ...newJobData, tags: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"

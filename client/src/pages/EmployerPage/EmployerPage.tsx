@@ -70,9 +70,9 @@ const EmployerPage = () => {
     workplace: "Remote",
     type: "Full-time",
     experience: "3-5 years",
-    salary: "90.000 TL - 140.000 TL",
+    salary: "30.000 TL - 45.000 TL",
     description: "",
-    tags: "React, Node.js, TypeScript",
+    tags: "Tam Zamanlı, Servis, Yemek, SGK",
   });
 
   // Edit Job Modal State
@@ -652,7 +652,7 @@ const EmployerPage = () => {
                   <input
                     type="text"
                     required
-                    placeholder="Örn: Senior Frontend Developer"
+                    placeholder="Örn: Temizlik Görevlisi, İnşaat Ustası, Garson, Şoför"
                     value={newJob.title}
                     onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
@@ -727,7 +727,7 @@ const EmployerPage = () => {
                   <label className="block font-bold text-gray-700 uppercase mb-1">Maaş Bilgisi</label>
                   <input
                     type="text"
-                    placeholder="Örn: 90.000 TL - 140.000 TL"
+                    placeholder="Örn: 30.000 TL - 45.000 TL/ay"
                     value={newJob.salary}
                     onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
@@ -738,7 +738,7 @@ const EmployerPage = () => {
                   <label className="block font-bold text-gray-700 uppercase mb-1">Etiketler (Virgülle ayırın)</label>
                   <input
                     type="text"
-                    placeholder="React, TypeScript, Remote"
+                    placeholder="Tam Zamanlı, Servis, Yemek, SGK"
                     value={newJob.tags}
                     onChange={(e) => setNewJob({ ...newJob, tags: e.target.value })}
                     className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"

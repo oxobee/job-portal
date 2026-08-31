@@ -2,8 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   BookmarkIcon,
   BriefcaseIcon,
-  CurrencyDollarIcon,
-  MagnifyingGlassIcon,
+    MagnifyingGlassIcon,
   ShareIcon,
   XMarkIcon,
   CheckCircleIcon,
@@ -48,68 +47,68 @@ export interface Job {
 const FALLBACK_JOBS: Job[] = [
   {
     id: 1,
-    title: "Senior UX/UI Designer",
-    company: "Google",
-    location: "Mountain View, California",
-    workplace: "Hybrid",
+    title: "Temizlik Görevlisi / Ofis & Tesis",
+    company: "Akdeniz Kurumsal Temizlik",
+    location: "İstanbul (Kadıköy)",
+    workplace: "On-site",
     type: "Full-time",
-    experience: "5+ years",
-    tags: ["Hybrid", "Full-time", "5+ years", "Figma", "Design Systems"],
-    salary: "$140k - $180k/yr",
-    salaryMin: 140000,
-    salaryMax: 180000,
-    time: "5dk önce",
-    applications: "140+ Başvuru",
-    logoBg: "bg-blue-600",
+    experience: "1-3 years",
+    tags: ["Tam Zamanlı", "Kadıköy", "Yol + Yemek", "SGK"],
+    salary: "28.000 TL - 34.000 TL/ay",
+    salaryMin: 28000,
+    salaryMax: 34000,
+    time: "10dk önce",
+    applications: "18 Başvuru",
+    logoBg: "bg-emerald-600",
     description:
-      "Google UX ekibine katılarak milyarlarca kullanıcının günlük olarak etkileşime girdiği yeni nesil web ve mobil arayüzleri tasarlayacak kıdemli bir Ürün Tasarımcısı arıyoruz.",
+      "Kadıköy ve Ataşehir bölgesindeki iş merkezi ve ofislerimizin günlük temizlik, düzen ve hijyen standartlarını sağlayacak titiz temizlik personeli arıyoruz.",
     responsibilities: [
-      "Kullanıcı odaklı wireframe, prototip ve yüksek kaliteli UI tasarımları oluşturmak.",
-      "Tasarım sistemini ölçeklemek ve frontend mühendisleri ile yakın iş birliği içinde çalışmak.",
-      "Kullanılabilirlik testleri ve kullanıcı araştırmaları yürütmek.",
+      "Ofis alanları, toplantı odaları ve ortak kullanım alanlarının günlük temizliği.",
+      "Çöp kovalarının boşaltılması ve çöp torbalarının yenilenmesi.",
+      "Hijyen malzemelerinin (sabun, havlu vb.) takibi ve eksiklerin tamamlanması.",
     ],
     requirements: [
-      "Figma, design systems ve prototipleme araçlarında en az 5 yıl deneyim.",
-      "Modern web ve mobil platform standartlarına (iOS/Android) hakimiyet.",
-      "Güçlü bir tasarım portfolyosu.",
+      "Benzer pozisyonda veya temizlik sektöründe en az 6 ay deneyimli.",
+      "Kişisel hijyenine ve temizliğe özen gösteren.",
+      "Vardiyalı veya düzenli mesai saatlerine uyum sağlayabilecek.",
     ],
     benefits: [
-      "Kapsamlı sağlık ve hayat sigortası",
-      "Yıllık eğitim ve kişisel gelişim bütçesi",
-      "Esnek çalışma modeli ve hisse opsiyonları",
+      "Tam SGK + Asgari Ücret Üzeri Maaş",
+      "Günlük Yemek Kartı (Ticket)",
+      "Yol / Servis Desteği",
     ],
   },
   {
     id: 2,
-    title: "Full Stack Engineer (React & Node)",
-    company: "Meta",
-    location: "Menlo Park, California",
-    workplace: "Remote",
+    title: "İnşaat Ustası (Kalıp & Demir Ustası)",
+    company: "Özdemir Yapı & İnşaat",
+    location: "İstanbul (Esenyurt)",
+    workplace: "On-site",
     type: "Full-time",
     experience: "3-5 years",
-    tags: ["Remote", "Full-time", "3-5 years", "React", "Node.js", "TypeScript"],
-    salary: "$150k - $190k/yr",
-    salaryMin: 150000,
-    salaryMax: 190000,
-    time: "12dk önce",
-    applications: "85+ Başvuru",
-    logoBg: "bg-indigo-600",
+    tags: ["Tam Zamanlı", "Şantiye", "Yatakhane", "Maaş + Prim"],
+    salary: "45.000 TL - 65.000 TL/ay",
+    salaryMin: 45000,
+    salaryMax: 65000,
+    time: "25dk önce",
+    applications: "24 Başvuru",
+    logoBg: "bg-amber-600",
     description:
-      "Meta ürün ekibinde yüksek performanslı, ölçeklenebilir sosyal medya ve iletişim araçlarının mimarisini geliştirecek yetenekli bir Full Stack Mühendisi aranıyor.",
+      "Esenyurt ve Beylikdüzü şantiyelerimizde kaba yapı, kalıp, demir ve beton döküm işlerinde çalışacak deneyimli inşaat ustaları ve kalfalar aranmaktadır.",
     responsibilities: [
-      "React, TypeScript ve Node.js mimarisinde ölçeklenebilir servisler geliştirmek.",
-      "RESTful ve GraphQL API entegrasyonlarını optimize etmek.",
-      "Mikroservis mimarisinde güvenilir ve hızlı çözümler üretmek.",
+      "Şantiye projesine uygun kalıp ve demir bağlama işlemlerinin yapılması.",
+      "İskele kurulumu ve emniyet kemeri ile güvenli çalışma kurallarına uyulması.",
+      "Kaba inşaat işlerinin zamanında ve eksiksiz teslim edilmesi.",
     ],
     requirements: [
-      "Modern React eko-sisteminde ve Node.js backend geliştirilmesinde 4+ yıl deneyim.",
-      "NoSQL (MongoDB) ve SQL veritabanı optimizasyonu bilgisi.",
-      "CI/CD ve bulut altyapısı (AWS/GCP) tecrübesi.",
+      "Kalıp, demir veya duvar ustalığında en az 3 yıl saha deneyimi.",
+      "İş sağlığı ve güvenliği kurallarına eksiksiz uyan.",
+      "Ekip çalışmasına yatkın ve şantiye ortamına alışkın.",
     ],
     benefits: [
-      "Tamamen uzaktan çalışma (Remote)",
-      "Yüksek prim ve performans bonusları",
-      "Ev ofis kurulum desteği",
+      "Yatakhane ve 3 Öğün Sıcak Yemek",
+      "Dolgun Günlük Yevmiye / Aylık Maaş Garantisi",
+      "Özel Şantiye Sağlık Sigortası",
     ],
   },
 ];
@@ -660,7 +659,7 @@ const HomePage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="block w-full h-12 rounded-xl border border-gray-300 pl-10 pr-10 text-gray-900 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 shadow-sm transition bg-white placeholder:text-gray-400"
-                placeholder="Pozisyon, şirket veya yetenek ara (örn: React, Designer)..."
+                placeholder="Meslek, pozisyon veya şehir ara (örn: Temizlik, İnşaat, Garson, Şoför)..."
               />
               {searchQuery && (
                 <button
@@ -672,16 +671,7 @@ const HomePage = () => {
               )}
             </div>
 
-            {/* Post Job Button for Mobile */}
-            <button
-              type="button"
-              onClick={() => setIsPostJobModalOpen(true)}
-              className="xl:hidden flex items-center gap-1.5 h-12 px-3.5 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition shrink-0"
-              title="İlan Ekle"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span className="hidden sm:inline">İlan Ekle</span>
-            </button>
+            {/* Mobile post job button removed */}
 
             {/* Mobile Filter Toggle Button */}
             <button
@@ -857,7 +847,7 @@ const HomePage = () => {
                 {/* Salary & Posted Time Footer */}
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 text-xs">
                   <div className="flex items-center gap-1 text-emerald-700 font-bold text-sm">
-                    <CurrencyDollarIcon className="h-4 w-4" />
+                    <span className="text-xs font-bold font-mono">₺</span>
                     <span>{job.salary}</span>
                   </div>
                   <span className="text-gray-400 flex items-center gap-1">
