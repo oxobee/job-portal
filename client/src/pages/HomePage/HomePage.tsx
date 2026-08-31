@@ -163,7 +163,7 @@ const HomePage = () => {
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
+      if (data) {
         const formatted: Job[] = data.map((item) => ({
           id: Number(item.id),
           title: item.title,
@@ -186,7 +186,9 @@ const HomePage = () => {
         }));
 
         setJobs(formatted);
-        setSelectedJob(formatted[0]);
+        if (formatted.length > 0) {
+          setSelectedJob(formatted[0]);
+        }
       }
     } catch (err) {
       console.warn("Supabase load fallback:", err);
