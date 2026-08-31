@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/core/supabase";
 
 export interface AppUser {
   id: string;
@@ -7,14 +8,31 @@ export interface AppUser {
   role: "super_admin" | "hr_recruiter" | "job_seeker";
   status?: string;
   phone?: string;
+  title?: string;
+  bio?: string;
+  location?: string;
+  skills?: string[];
+  experience_history?: any[];
+  education_history?: any[];
+  linkedin_url?: string;
+  portfolio_url?: string;
+  company_name?: string;
+  company_sector?: string;
+  company_size?: string;
+  company_website?: string;
+  company_address?: string;
+  company_logo?: string;
 }
 
 type AuthContextProps = {
   isAuthenticated: boolean;
   user: AppUser | null;
   isSuperAdmin: boolean;
+  isEmployer: boolean;
+  isJobSeeker: boolean;
   login: (token: string, user: AppUser) => void;
   logout: () => void;
+  updateCurrentUser: (updated: Partial<AppUser>) => void;
 };
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -37,6 +55,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsAuthenticated(false);
   };
 
+  const updateCurrentUser = (updated: Partial<AppUser>) => {
+    if (!user) return;
+    const merged = { ...user, ...updated };
+    setUser(merged);
+    localStorage.setItem("jobportal_user", JSON.stringify(merged));
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem("jobportal_user");
     const savedToken = localStorage.getItem("jobportal_token");
@@ -45,6 +70,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const parsed = JSON.parse(savedUser);
         setUser(parsed);
         setIsAuthenticated(true);
+
+        // Fetch fresh profile data from Supabase
+        if (parsed.id && parsed.id !== "super_admin_oxonom") {
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", parsed.id)
+            .single()
+            .then(({ data }) => {
+              if (data) {
+                const refreshed = { ...parsed, ...data };
+                setUser(refreshed);
+                localStorage.setItem("jobportal_user", JSON.stringify(refreshed));
+              }
+            });
+        }
       } catch (e) {
         logout();
       }
@@ -52,6 +93,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const isSuperAdmin = user?.role === "super_admin";
+  const isEmployer = user?.role === "hr_recruiter";
+  const isJobSeeker = user?.role === "job_seeker";
 
   return (
     <AuthContext.Provider
@@ -59,8 +102,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated,
         user,
         isSuperAdmin,
+        isEmployer,
+        isJobSeeker,
         login,
         logout,
+        updateCurrentUser,
       }}
     >
       {children}

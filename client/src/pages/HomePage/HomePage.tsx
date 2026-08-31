@@ -19,6 +19,9 @@ import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { Dialog, Transition } from "@headlessui/react";
 import Divider from "@/components/core-ui/Divider";
 import PortalLayout from "@/components/layouts/portal/PortalLayout";
+import { useAuth } from "@/providers";
+import { Link } from "react-router-dom";
+import { UserIcon, ArrowRightEndOnRectangleIcon } from "@heroicons/react/24/outline";
 import { supabase } from "@/core/supabase";
 
 export interface Job {
@@ -112,6 +115,9 @@ const FALLBACK_JOBS: Job[] = [
 ];
 
 const HomePage = () => {
+  const { isAuthenticated, user } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalReason, setAuthModalReason] = useState<"apply" | "save">("apply");
   const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS);
   const [selectedJob, setSelectedJob] = useState<Job>(FALLBACK_JOBS[0]);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,6 +210,11 @@ const HomePage = () => {
   // 2. Handle Job Save (Supabase & Local)
   const handleToggleSaveJob = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      setAuthModalReason("save");
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (savedJobIds.includes(id)) {
       setSavedJobIds((prev) => prev.filter((item) => item !== id));
       await supabase
@@ -236,6 +247,11 @@ const HomePage = () => {
   };
 
   const handleApplyClick = (job: Job) => {
+    if (!isAuthenticated) {
+      setAuthModalReason("apply");
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (appliedJobIds.includes(job.id)) {
       showToast("Bu ilana zaten başvurdunuz.");
       return;
@@ -255,9 +271,16 @@ const HomePage = () => {
       try {
         await supabase.from("applications").insert({
           job_id: targetJobId,
-          applicant_name: "Misafir Başvuran",
-          applicant_email: "user@example.com",
-          status: "submitted",
+          user_id: user?.id || "",
+          applicant_name: user?.full_name || "İş Arayan",
+          applicant_email: user?.email || "",
+          applicant_phone: user?.phone || "",
+          applicant_title: user?.title || "Yazılım Geliştirici",
+          applicant_bio: user?.bio || "",
+          applicant_skills: user?.skills || [],
+          applicant_experience: user?.experience_history || [],
+          applicant_education: user?.education_history || [],
+          status: "Beklemede",
         });
       } catch (err) {
         console.warn("Application insert error:", err);
@@ -481,14 +504,7 @@ const HomePage = () => {
       <aside className="sticky top-24 hidden w-72 shrink-0 xl:block">
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-200/80 p-5 space-y-6">
           {/* Post Job Quick Button */}
-          <button
-            type="button"
-            onClick={() => setIsPostJobModalOpen(true)}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 py-3 px-4 text-sm font-bold text-white shadow-md shadow-indigo-200 transition active:scale-95"
-          >
-            <PlusIcon className="h-5 w-5" />
-            Yeni İlan Yayınla
-          </button>
+          {/* Post Job Button removed for job seeker */}
 
           <div className="flex items-center justify-between pt-2">
             <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
@@ -1686,6 +1702,46 @@ const HomePage = () => {
                 </div>
               </Dialog.Panel>
             </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      {/* AUTH REQUIRED MODAL FOR GUESTS */}
+      <Transition.Root show={isAuthModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsAuthModalOpen(false)}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
+                <UserIcon className="h-8 w-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {authModalReason === "apply" ? "Başvuru Yapmak İçin Giriş Yapın" : "İlanı Kaydetmek İçin Giriş Yapın"}
+                </h3>
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  {authModalReason === "apply"
+                    ? "İş ilanlarına başvurabilmek ve profilinizi işverenlere iletebilmek için lütfen giriş yapın veya ücretsiz hesap oluşturun."
+                    : "İlanları kaydedebilmek ve daha sonra başvurmak üzere listenizde tutabilmek için giriş yapmalısınız."}
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Link
+                  to="/login"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95"
+                >
+                  <ArrowRightEndOnRectangleIcon className="h-4 w-4" />
+                  Giriş Yap
+                </Link>
+                <Link
+                  to="/register"
+                  className="flex w-full items-center justify-center rounded-xl bg-white border border-gray-300 py-3 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Ücretsiz Kayıt Ol
+                </Link>
+              </div>
+            </Dialog.Panel>
           </div>
         </Dialog>
       </Transition.Root>

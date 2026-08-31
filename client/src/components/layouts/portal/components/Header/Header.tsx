@@ -9,6 +9,7 @@ import {
   ArrowLeftStartOnRectangleIcon,
   BookmarkIcon,
   ShieldCheckIcon,
+  BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import { useAuth } from "@/providers";
@@ -18,7 +19,7 @@ import { supabase } from "@/core/supabase";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isAuthenticated, isSuperAdmin, user, logout } = useAuth();
+  const { isAuthenticated, isSuperAdmin, isEmployer, isJobSeeker, user, logout } = useAuth();
   const location = useLocation();
   const [siteName, setSiteName] = useState("Job Portal");
   const [customLogoUrl, setCustomLogoUrl] = useState("");
@@ -37,24 +38,34 @@ const Header = () => {
   }, []);
 
   const navigation = useMemo(() => {
-    const items = [
-      { name: "Ana Sayfa", href: "/", icon: HomeIcon },
-    ];
+    if (!isAuthenticated) {
+      return [{ name: "İş İlanları", href: "/", icon: HomeIcon }];
+    }
 
-    if (isAuthenticated) {
-      items.push(
-        { name: "İlanlarım", href: "/my-jobs", icon: BriefcaseIcon },
+    if (isEmployer) {
+      return [
+        { name: "İlanlarım & Başvurular", href: "/employer", icon: BriefcaseIcon },
+        { name: "Firma Profilim", href: "/profile", icon: BuildingOfficeIcon },
+        { name: "Mesajlar", href: "/messages", icon: ChatBubbleLeftRightIcon },
+      ];
+    }
+
+    if (isJobSeeker) {
+      return [
+        { name: "İş İlanları", href: "/", icon: HomeIcon },
+        { name: "Başvurularım", href: "/my-jobs", icon: BriefcaseIcon },
         { name: "Kaydedilenler", href: "/saved-jobs", icon: BookmarkIcon },
-        { name: "Mesajlar", href: "/messages", icon: ChatBubbleLeftRightIcon }
-      );
+        { name: "Mesajlar", href: "/messages", icon: ChatBubbleLeftRightIcon },
+      ];
     }
 
-    if (isSuperAdmin) {
-      items.push({ name: "Süper Admin", href: "/admin", icon: ShieldCheckIcon });
-    }
-
+    // Super admin default
+    const items = [
+      { name: "İş İlanları", href: "/", icon: HomeIcon },
+      { name: "Süper Admin", href: "/admin", icon: ShieldCheckIcon },
+    ];
     return items;
-  }, [isAuthenticated, isSuperAdmin]);
+  }, [isAuthenticated, isEmployer, isJobSeeker]);
 
   return (
     <header className="shrink-0 border-b border-gray-200 bg-white sticky top-0 z-30 shadow-xs">
@@ -64,11 +75,13 @@ const Header = () => {
       >
         <div className="flex lg:flex-1 items-center gap-3">
           {customLogoUrl ? (
-            <Link to="/" className="flex items-center gap-2">
+            <Link to={isEmployer ? "/employer" : "/"} className="flex items-center gap-2">
               <img src={customLogoUrl} alt={siteName} className="h-8 max-w-[180px] object-contain" />
             </Link>
           ) : (
-            <Logo />
+            <Link to={isEmployer ? "/employer" : "/"}>
+              <Logo />
+            </Link>
           )}
         </div>
 
@@ -101,7 +114,7 @@ const Header = () => {
               to={item.href}
               className={`text-sm font-semibold leading-6 flex items-center gap-x-2 py-2 px-3 rounded-lg transition ${
                 location.pathname === item.href
-                  ? "text-indigo-600 bg-indigo-50/70"
+                  ? "text-indigo-600 bg-indigo-50/70 font-bold"
                   : item.href === "/admin"
                   ? "text-purple-700 bg-purple-50 hover:bg-purple-100 font-bold"
                   : "text-gray-700 hover:text-indigo-600 hover:bg-gray-50"
@@ -116,6 +129,16 @@ const Header = () => {
         {/* Desktop User / Auth Actions */}
         {isAuthenticated ? (
           <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-x-4">
+            {isEmployer && (
+              <Link
+                to="/employer"
+                className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm hover:bg-indigo-500 transition active:scale-95"
+              >
+                <BriefcaseIcon className="h-4 w-4" />
+                İşveren Paneli
+              </Link>
+            )}
+
             {isSuperAdmin && (
               <Link
                 to="/admin"
@@ -145,10 +168,16 @@ const Header = () => {
               >
                 <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 focus:outline-none p-1 z-50">
                   <div className="px-3 py-2 border-b border-gray-100">
-                    <p className="text-xs font-bold text-gray-900 truncate">{user?.full_name}</p>
+                    <p className="text-xs font-bold text-gray-900 truncate">
+                      {isEmployer ? user?.company_name || user?.full_name : user?.full_name}
+                    </p>
                     <p className="text-[11px] text-gray-400 truncate">{user?.email}</p>
                     <span className="inline-block mt-1 text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">
-                      {user?.role === "super_admin" ? "Süper Admin" : user?.role === "hr_recruiter" ? "İK Yetkilisi" : "İş Arayan"}
+                      {user?.role === "super_admin"
+                        ? "Süper Admin"
+                        : user?.role === "hr_recruiter"
+                        ? "İşveren / İK"
+                        : "İş Arayan"}
                     </span>
                   </div>
                   <div className="px-1 py-1">
@@ -167,6 +196,21 @@ const Header = () => {
                         )}
                       </Menu.Item>
                     )}
+                    {isEmployer && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            to="/employer"
+                            className={`${
+                              active ? "bg-indigo-600 text-white" : "text-gray-900 font-semibold"
+                            } group flex w-full items-center rounded-xl px-3 py-2 text-sm transition`}
+                          >
+                            <BriefcaseIcon className="h-5 w-5 mr-2.5 text-gray-400" />
+                            İlanlarım & Başvurular
+                          </Link>
+                        )}
+                      </Menu.Item>
+                    )}
                     <Menu.Item>
                       {({ active }) => (
                         <Link
@@ -176,7 +220,7 @@ const Header = () => {
                           } group flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium transition`}
                         >
                           <UserIcon className="h-5 w-5 mr-2.5 text-gray-400" />
-                          Profilim
+                          {isEmployer ? "Firma Profilim" : "Özgeçmişim"}
                         </Link>
                       )}
                     </Menu.Item>
@@ -308,9 +352,24 @@ const Header = () => {
                   ) : (
                     <div className="space-y-1">
                       <div className="px-3 py-2 mb-2 bg-white rounded-xl border border-gray-200/80">
-                        <p className="text-xs font-bold text-gray-900 truncate">{user?.full_name}</p>
+                        <p className="text-xs font-bold text-gray-900 truncate">
+                          {isEmployer ? user?.company_name || user?.full_name : user?.full_name}
+                        </p>
                         <p className="text-[11px] text-gray-400 truncate">{user?.email}</p>
+                        <span className="inline-block mt-0.5 text-[9px] font-bold uppercase bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded">
+                          {user?.role === "super_admin" ? "Süper Admin" : isEmployer ? "İşveren / İK" : "İş Arayan"}
+                        </span>
                       </div>
+                      {isEmployer && (
+                        <Link
+                          to="/employer"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition"
+                        >
+                          <BriefcaseIcon className="h-5 w-5" />
+                          İşveren Paneli
+                        </Link>
+                      )}
                       {isSuperAdmin && (
                         <Link
                           to="/admin"
@@ -327,7 +386,7 @@ const Header = () => {
                         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-700 hover:bg-white transition"
                       >
                         <UserIcon className="h-5 w-5 text-gray-400" />
-                        Profilim
+                        {isEmployer ? "Firma Profilim" : "Özgeçmişim"}
                       </Link>
                       <button
                         onClick={() => {
