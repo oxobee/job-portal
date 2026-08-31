@@ -42,6 +42,8 @@ export interface Job {
   responsibilities: string[];
   requirements: string[];
   benefits: string[];
+  employer_logo?: string;
+  hide_phone?: boolean;
 }
 
 const FALLBACK_JOBS: Job[] = [
@@ -175,9 +177,9 @@ const HomePage = () => {
           title: item.title,
           company: item.company,
           location: item.location,
-          workplace: item.workplace || "Remote",
-          type: item.type || "Full-time",
-          experience: item.experience || "3-5 years",
+          workplace: item.workplace || "Aylık",
+          type: item.type || "Tam Zamanlı",
+          experience: item.experience || "1-3 Yıl",
           tags: item.tags || [],
           salary: item.salary,
           salaryMin: Number(item.salary_min) || 0,
@@ -189,6 +191,8 @@ const HomePage = () => {
           responsibilities: item.responsibilities || [],
           requirements: item.requirements || [],
           benefits: item.benefits || [],
+          employer_logo: item.employer_logo || item.company_logo || item.logo_url || "",
+          hide_phone: !!item.hide_phone,
         }));
 
         setJobs(formatted);
