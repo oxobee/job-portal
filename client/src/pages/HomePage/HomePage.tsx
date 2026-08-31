@@ -295,6 +295,7 @@ const HomePage = () => {
           disability_type: user?.disability_type || "",
           applicant_references: user?.references_list || [],
           applicant_document_url: user?.document_name ? user.document_name : "",
+          applicant_photos: user?.user_photos || [],
           status: "Beklemede",
         });
       } catch (err) {

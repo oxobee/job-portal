@@ -19,12 +19,18 @@ export interface AppUser {
   references_list?: Array<{ name: string; company: string; phone: string; note?: string }>;
   document_url?: string;
   document_name?: string;
+  user_photos?: string[];
   company_name?: string;
   company_sector?: string;
   company_size?: string;
   company_website?: string;
   company_address?: string;
   company_logo?: string;
+  tax_office?: string;
+  tax_number?: string;
+  company_legal_type?: string;
+  authorized_person?: string;
+  hide_phone?: boolean;
 }
 
 type AuthContextProps = {

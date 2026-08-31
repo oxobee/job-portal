@@ -12,6 +12,7 @@ import {
   HeartIcon,
   EyeSlashIcon,
   PhotoIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/providers";
 import { supabase } from "@/core/supabase";
@@ -20,6 +21,7 @@ const ProfilePage = () => {
   const { user, isEmployer, updateCurrentUser } = useAuth();
   const [saved, setSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   // Job Seeker Profile Form State
   const [seekerForm, setSeekerForm] = useState({
@@ -33,6 +35,7 @@ const ProfilePage = () => {
     disability_type: "",
     document_name: "",
     document_url: "",
+    user_photos: [] as string[],
     skills: [] as string[],
     experience_history: [] as Array<{ role: string; company: string; period: string; description: string }>,
     references_list: [] as Array<{ name: string; company: string; phone: string; note?: string }>,
@@ -40,7 +43,7 @@ const ProfilePage = () => {
   });
   const [newSkillInput, setNewSkillInput] = useState("");
 
-  // Employer Profile Form State (With Legal Info and Privacy)
+  // Employer Profile Form State
   const [employerForm, setEmployerForm] = useState({
     company_name: "",
     tax_office: "",
@@ -87,6 +90,7 @@ const ProfilePage = () => {
           disability_type: user.disability_type || "",
           document_name: (user as any).document_name || "",
           document_url: (user as any).document_url || "",
+          user_photos: user.user_photos && Array.isArray(user.user_photos) ? user.user_photos : [],
           skills: user.skills && Array.isArray(user.skills) && user.skills.length > 0
             ? user.skills
             : ["Kalıp Bağlama", "Gazaltı Kaynağı", "Forklift Operatörlüğü", "B Sınıfı Ehliyet"],
@@ -120,9 +124,61 @@ const ProfilePage = () => {
     }
   }, [user, isEmployer]);
 
+  // Handle Photo Upload (Min 1, Max 5)
+  const handlePhotosUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhotoError(null);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const currentPhotos = [...seekerForm.user_photos];
+    const availableSlots = 5 - currentPhotos.length;
+
+    if (availableSlots <= 0) {
+      setPhotoError("En fazla 5 fotoğraf yükleyebilirsiniz.");
+      return;
+    }
+
+    const filesToProcess = Array.from(files).slice(0, availableSlots);
+    let loadedCount = 0;
+    const newPhotos: string[] = [];
+
+    filesToProcess.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          newPhotos.push(reader.result as string);
+        }
+        loadedCount++;
+        if (loadedCount === filesToProcess.length) {
+          setSeekerForm((prev) => ({
+            ...prev,
+            user_photos: [...prev.user_photos, ...newPhotos],
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotoError(null);
+    setSeekerForm((prev) => ({
+      ...prev,
+      user_photos: prev.user_photos.filter((_, i) => i !== index),
+    }));
+  };
+
   // Save Job Seeker Profile
   const handleSaveSeeker = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPhotoError(null);
+
+    // Validate Photo Requirement (Min 1, Max 5)
+    if (!seekerForm.user_photos || seekerForm.user_photos.length === 0) {
+      setPhotoError("⚠️ Lütfen profilinizi kaydedebilmek için en az 1 vesikalık/profil fotoğrafı yükleyin (En fazla 5 fotoğraf).");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (user?.id && user.id !== "super_admin_oxonom") {
@@ -136,6 +192,7 @@ const ProfilePage = () => {
           disability_type: seekerForm.disability_type,
           document_name: seekerForm.document_name,
           document_url: seekerForm.document_url,
+          user_photos: seekerForm.user_photos,
           skills: seekerForm.skills,
           experience_history: seekerForm.experience_history,
           references_list: seekerForm.references_list,
@@ -255,7 +312,7 @@ const ProfilePage = () => {
     });
   };
 
-  // File Upload
+  // File Upload for CV/Document
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -292,6 +349,12 @@ const ProfilePage = () => {
               <img
                 src={employerForm.company_logo}
                 alt={employerForm.company_name}
+                className="w-20 h-20 rounded-2xl object-cover border border-gray-200 shadow-md"
+              />
+            ) : !isEmployer && seekerForm.user_photos.length > 0 ? (
+              <img
+                src={seekerForm.user_photos[0]}
+                alt={seekerForm.full_name}
                 className="w-20 h-20 rounded-2xl object-cover border border-gray-200 shadow-md"
               />
             ) : (
@@ -336,7 +399,7 @@ const ProfilePage = () => {
           )}
 
           {/* ========================================================================= */}
-          {/* EMPLOYER PROFILE FORM (YASAL BİLGİLER + LOGO + GİZLİLİK) */}
+          {/* EMPLOYER PROFILE FORM */}
           {/* ========================================================================= */}
           {isEmployer ? (
             <form onSubmit={handleSaveEmployer} className="mt-6 space-y-6 text-xs">
@@ -522,9 +585,71 @@ const ProfilePage = () => {
             </form>
           ) : (
             /* ========================================================================= */
-            /* JOB SEEKER PROFILE FORM (İŞÇİ / MAVİ YAKA) */
+            /* JOB SEEKER PROFILE FORM (İŞÇİ / MAVİ YAKA) WITH PHOTO UPLOAD */
             /* ========================================================================= */
             <form onSubmit={handleSaveSeeker} className="mt-6 space-y-6 text-xs">
+              {/* Photo Error Banner */}
+              {photoError && (
+                <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-red-800 font-bold text-xs flex items-center gap-2">
+                  <span className="text-lg">⚠️</span>
+                  <span>{photoError}</span>
+                </div>
+              )}
+
+              {/* MULTIPLE PHOTO UPLOAD DROPZONE (MIN 1, MAX 5) */}
+              <div className="bg-indigo-50/60 p-5 rounded-2xl border border-indigo-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-indigo-950 uppercase flex items-center gap-2 text-xs">
+                    <PhotoIcon className="h-5 w-5 text-indigo-600" />
+                    Profil ve Yüz Fotoğraflarınız <span className="text-red-500">* (En Az 1, En Fazla 5 Fotoğraf)</span>
+                  </label>
+                  <span className="text-[11px] font-bold text-indigo-700">
+                    {seekerForm.user_photos.length} / 5 Fotoğraf Yüklendi
+                  </span>
+                </div>
+                <p className="text-[11px] text-indigo-700">
+                  İşverenlerin sizi daha hızlı tanıması ve işe alım sürecini başlatması için <strong>en az 1 adet net vesikalık veya boy fotoğrafı</strong> eklemelisiniz.
+                </p>
+
+                {/* Uploaded Photos Grid */}
+                {seekerForm.user_photos.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+                    {seekerForm.user_photos.map((photoUrl, i) => (
+                      <div key={i} className="relative group aspect-square rounded-2xl overflow-hidden border-2 border-indigo-300 shadow-sm bg-white">
+                        <img src={photoUrl} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePhoto(i)}
+                          className="absolute top-1.5 right-1.5 p-1 bg-red-600 text-white rounded-full opacity-95 hover:bg-red-700 transition shadow-md"
+                          title="Fotoğrafı Sil"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                        <span className="absolute bottom-1 left-1.5 text-[9px] font-black text-white bg-black/60 px-1.5 py-0.5 rounded">
+                          #{i + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Dropzone Input */}
+                {seekerForm.user_photos.length < 5 && (
+                  <label className="border-2 border-dashed border-indigo-300 hover:border-indigo-600 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer bg-white transition text-center mt-2 shadow-xs">
+                    <ArrowUpTrayIcon className="h-7 w-7 text-indigo-600 mb-1" />
+                    <span className="text-xs font-bold text-indigo-950">Fotoğraf Seçin veya Sürükleyip Bırakın</span>
+                    <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG veya JPEG formatları desteklenir</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotosUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
               {/* Personal Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -854,7 +979,7 @@ const ProfilePage = () => {
                   disabled={isSubmitting}
                   className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95 disabled:opacity-50 text-sm"
                 >
-                  {isSubmitting ? "Kaydediliyor..." : "Profilimi ve Bilgilerimi Kaydet"}
+                  {isSubmitting ? "Kaydediliyor..." : "Profilimi ve Fotoğraflarımı Kaydet"}
                 </button>
               </div>
             </form>

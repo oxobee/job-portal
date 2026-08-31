@@ -59,6 +59,7 @@ export interface CandidateApplication {
   disability_type?: string;
   applicant_references?: any[];
   applicant_document_url?: string;
+  applicant_photos?: string[];
   status: string;
   created_at: string;
   jobs?: EmployerJob;
@@ -627,6 +628,28 @@ const EmployerPage = () => {
                   </div>
 
                   {/* Bio / Summary */}
+                  {/* Candidate Photos Gallery (Aday Fotoğrafları) */}
+                  {selectedCandidate.applicant_photos && selectedCandidate.applicant_photos.length > 0 && (
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">
+                        📷 Aday Fotoğrafları ({selectedCandidate.applicant_photos.length} Adet)
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {selectedCandidate.applicant_photos.map((photo: string, idx: number) => (
+                          <a
+                            key={idx}
+                            href={photo}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xs block bg-gray-100"
+                          >
+                            <img src={photo} alt="Fotoğraf" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Hakkında / İş Deneyimi Özeti</h4>
                     <div className="p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100 text-gray-700 leading-relaxed text-xs">
