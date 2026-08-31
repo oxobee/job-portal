@@ -5,27 +5,25 @@ import { Link } from "react-router-dom";
 
 const ForgotPasswordPage = () => {
   return (
-    <PublicLayout title="Sign in">
+    <PublicLayout title="Şifremi Unuttum">
       <div className="mx-auto w-full max-w-sm lg:w-96">
         <div>
           <Logo />
-          <h2 className="text-2xl font-bold leading-9 tracking-tight text-gray-900">
-            Forgot your password?
+          <h2 className="text-2xl font-bold leading-9 tracking-tight text-gray-900 mt-4">
+            Şifrenizi mi Unuttunuz?
           </h2>
           <p className="mt-2 text-sm leading-6 text-gray-500">
-            No worries! Enter your email address and we'll send you a link to
-            reset your password.
+            Endişelenmeyin! Kayıtlı e-posta adresinizi girin, şifrenizi sıfırlamanız için size bir bağlantı gönderelim.{" "}
             <Link
               to="/login"
               className="font-semibold text-indigo-600 hover:text-indigo-500"
             >
-              {" "}
-              Sign in
+              Giriş Yap
             </Link>
           </p>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-8">
           <ForgotPasswordForm />
         </div>
       </div>

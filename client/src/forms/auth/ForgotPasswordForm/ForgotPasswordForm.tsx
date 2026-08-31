@@ -1,21 +1,47 @@
+import { useState } from "react";
+
 const ForgotPasswordForm = () => {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      setSubmitted(true);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-5 text-center text-sm text-emerald-800">
+        <p className="font-bold">Sıfırlama Bağlantısı Gönderildi!</p>
+        <p className="mt-1 text-xs text-emerald-600">
+          <strong>{email}</strong> adresine şifre yenileme bağlantısı başarıyla iletildi.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <form action="#" method="POST" className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium leading-6 text-gray-900"
+          className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
         >
-          Email address
+          E-posta Adresi <span className="text-red-500">*</span>
         </label>
-        <div className="mt-2">
+        <div>
           <input
             id="email"
             name="email"
             type="email"
             autoComplete="email"
             required
-            className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            placeholder="ornek@alanadi.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="block w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
           />
         </div>
       </div>
@@ -23,9 +49,9 @@ const ForgotPasswordForm = () => {
       <div>
         <button
           type="submit"
-          className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="flex w-full justify-center rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95"
         >
-          Continue
+          Şifre Sıfırlama Bağlantısı Gönder
         </button>
       </div>
     </form>

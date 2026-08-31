@@ -21,19 +21,30 @@ const TermsAndConditionsDialog: FC<Props> = ({ open, onClose }) => {
 
   return (
     <Dialog
-      title="Terms and Conditions"
+      title="Kullanım Koşulları ve Gizlilik Sözleşmesi"
+      acceptLabel="Anladım"
       enableCancel={false}
       {...{ open, onClose, renderLeftIcon }}
     >
-      <p className="text-sm text-gray-700">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-        commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
-        velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-        occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-        mollit anim id est laborum.
-      </p>
+      <div className="space-y-3 text-xs text-gray-600 max-h-60 overflow-y-auto pr-2">
+        <p>
+          Job Portal platformuna hoş geldiniz. Bu platform üzerinden iş arayanlar
+          ve iş verenler güvenli ve şeffaf bir şekilde iletişime geçebilir.
+        </p>
+        <p>
+          <strong>1. Gizlilik:</strong> Kişisel verileriniz KVKK ve ilgili veri
+          koruma mevzuatına uygun olarak yalnızca iş başvuruları ve platform
+          hizmetleri kapsamında işlenmektedir.
+        </p>
+        <p>
+          <strong>2. İlan Güvenliği:</strong> Platformda yayınlanan tüm iş ilanları
+          gerçeklik ve yasal uygunluk denetiminden geçmektedir.
+        </p>
+        <p>
+          <strong>3. Kullanıcı Hakları:</strong> Dilediğiniz zaman hesabınızı silebilir,
+          kayıtlı bilgilerinizi güncelleyebilir veya başvurularınızı geri çekebilirsiniz.
+        </p>
+      </div>
     </Dialog>
   );
 };

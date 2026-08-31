@@ -13,23 +13,23 @@ const LoginForm = () => {
           <Alert type="error" message={loginError} />
         </div>
       )}
-      <form className="space-y-6" onSubmit={form.handleSubmit} noValidate>
+      <form className="space-y-5" onSubmit={form.handleSubmit} noValidate>
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium leading-6 text-gray-900"
+            className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
           >
-            Email address
-            <span className="text-red-500">*</span>
+            E-posta Adresi <span className="text-red-500">*</span>
           </label>
-          <div className="mt-2">
+          <div>
             <input
               id="email"
               name="email"
               type="email"
               autoComplete="email"
               required
-              className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              placeholder="ornek@alanadi.com"
+              className="block w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
               readOnly={form.isSubmitting}
               value={form.values.email}
               onChange={form.handleChange}
@@ -41,19 +41,19 @@ const LoginForm = () => {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium leading-6 text-gray-900"
+            className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
           >
-            Password
-            <span className="text-red-500">*</span>
+            Şifre <span className="text-red-500">*</span>
           </label>
-          <div className="mt-2">
+          <div>
             <input
               id="password"
               name="password"
               type="password"
               autoComplete="current-password"
               required
-              className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              placeholder="••••••••"
+              className="block w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
               readOnly={form.isSubmitting}
               value={form.values.password}
               onChange={form.handleChange}
@@ -74,18 +74,18 @@ const LoginForm = () => {
             />
             <label
               htmlFor="remember-me"
-              className="ml-3 block text-sm leading-6 text-gray-700"
+              className="ml-2.5 block text-xs font-medium text-gray-700"
             >
-              Remember me
+              Beni Hatırla
             </label>
           </div>
 
-          <div className="text-sm leading-6">
+          <div className="text-xs">
             <Link
               to="/forgot-password"
               className="font-semibold text-indigo-600 hover:text-indigo-500"
             >
-              Forgot password?
+              Şifremi Unuttum?
             </Link>
           </div>
         </div>
@@ -93,10 +93,10 @@ const LoginForm = () => {
         <div>
           <button
             type="submit"
-            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="flex w-full justify-center rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95 disabled:opacity-50"
             disabled={form.isSubmitting}
           >
-            Sign in
+            {form.isSubmitting ? "Giriş Yapılıyor..." : "Giriş Yap"}
           </button>
         </div>
       </form>

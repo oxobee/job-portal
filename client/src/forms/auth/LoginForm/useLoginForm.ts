@@ -22,12 +22,12 @@ const useLoginForm = () => {
 
   const validationSchema = Yup.object({
     email: Yup.string()
-      .required("Email is required")
-      .email("Invalid email address"),
+      .required("E-posta adresi zorunludur")
+      .email("Geçerli bir e-posta adresi giriniz"),
     password: Yup.string()
-      .required("Password is required")
-      .min(8, "Password must be at least 8 characters")
-      .max(20, "Password must be at most 20 characters"),
+      .required("Şifre alanı zorunludur")
+      .min(6, "Şifre en az 6 karakter olmalıdır")
+      .max(30, "Şifre en fazla 30 karakter olabilir"),
   });
 
   const form = useFormik({
