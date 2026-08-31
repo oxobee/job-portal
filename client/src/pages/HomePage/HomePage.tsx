@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   BookmarkIcon,
   BriefcaseIcon,
@@ -12,11 +12,14 @@ import {
   BuildingOfficeIcon,
   FunnelIcon,
   CheckIcon,
+  PlusIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
 import { Dialog, Transition } from "@headlessui/react";
 import Divider from "@/components/core-ui/Divider";
 import PortalLayout from "@/components/layouts/portal/PortalLayout";
+import { supabase } from "@/core/supabase";
 
 export interface Job {
   id: number;
@@ -39,7 +42,7 @@ export interface Job {
   benefits: string[];
 }
 
-const INITIAL_JOBS: Job[] = [
+const FALLBACK_JOBS: Job[] = [
   {
     id: 1,
     title: "Senior UX/UI Designer",
@@ -52,8 +55,8 @@ const INITIAL_JOBS: Job[] = [
     salary: "$140k - $180k/yr",
     salaryMin: 140000,
     salaryMax: 180000,
-    time: "5min ago",
-    applications: "140+ Applications",
+    time: "5dk önce",
+    applications: "140+ Başvuru",
     logoBg: "bg-blue-600",
     description:
       "Google UX ekibine katılarak milyarlarca kullanıcının günlük olarak etkileşime girdiği yeni nesil web ve mobil arayüzleri tasarlayacak kıdemli bir Ürün Tasarımcısı arıyoruz.",
@@ -85,8 +88,8 @@ const INITIAL_JOBS: Job[] = [
     salary: "$150k - $190k/yr",
     salaryMin: 150000,
     salaryMax: 190000,
-    time: "12min ago",
-    applications: "85+ Applications",
+    time: "12dk önce",
+    applications: "85+ Başvuru",
     logoBg: "bg-indigo-600",
     description:
       "Meta ürün ekibinde yüksek performanslı, ölçeklenebilir sosyal medya ve iletişim araçlarının mimarisini geliştirecek yetenekli bir Full Stack Mühendisi aranıyor.",
@@ -106,208 +109,13 @@ const INITIAL_JOBS: Job[] = [
       "Ev ofis kurulum desteği",
     ],
   },
-  {
-    id: 3,
-    title: "Senior Product Manager",
-    company: "Amazon",
-    location: "Seattle, Washington",
-    workplace: "On-site",
-    type: "Full-time",
-    experience: "5+ years",
-    tags: ["On-site", "Full-time", "5+ years", "Agile", "Roadmap", "E-commerce"],
-    salary: "$160k - $210k/yr",
-    salaryMin: 160000,
-    salaryMax: 210000,
-    time: "25min ago",
-    applications: "210+ Applications",
-    logoBg: "bg-amber-600",
-    description:
-      "Amazon Prime ekibinde ürün vizyonunu belirleyecek, veri odaklı kararlarla müşteri deneyimini bir üst seviyeye taşıyacak Kıdemli Ürün Yöneticisi arıyoruz.",
-    responsibilities: [
-      "Ürün yol haritasını (roadmap) hazırlamak ve sprint önceliklerini yönetmek.",
-      "Kullanıcı geri bildirimlerini ve analitik verileri analiz ederek aksiyon planları oluşturmak.",
-      "Tasarım, mühendislik ve pazarlama ekipleri arasında köprü vazifesi görmek.",
-    ],
-    requirements: [
-      "Büyük ölçekli dijital ürünlerde en az 5 yıl ürün yönetimi deneyimi.",
-      "Veri analitiği araçlarına (SQL, Tableau vb.) hakimiyet.",
-      "Mükemmel analitik düşünme ve iletişim becerisi.",
-    ],
-    benefits: [
-      "Kapsamlı sağlık paketi",
-      "Amazon hisse senedi planı",
-      "Kariyer rotasyonu ve liderlik programları",
-    ],
-  },
-  {
-    id: 4,
-    title: "Data Scientist & AI Specialist",
-    company: "Microsoft",
-    location: "Redmond, Washington",
-    workplace: "Hybrid",
-    type: "Full-time",
-    experience: "3-5 years",
-    tags: ["Hybrid", "Full-time", "3-5 years", "Python", "PyTorch", "LLMs"],
-    salary: "$145k - $185k/yr",
-    salaryMin: 145000,
-    salaryMax: 185000,
-    time: "45min ago",
-    applications: "92+ Applications",
-    logoBg: "bg-emerald-600",
-    description:
-      "Microsoft Azure AI ekibinde en yeni derin öğrenme modelleri ve LLM çözümleri geliştirecek, yapay zeka projelerine yön verecek bir Veri Bilimci arıyoruz.",
-    responsibilities: [
-      "Büyük dil modelleri (LLM) ve üretken yapay zeka algoritmaları geliştirmek.",
-      "Veri boru hatlarını (data pipelines) tasarlamak ve model performansını izlemek.",
-      "İş birimlerine yönelik analitik öngörüler ve raporlar sunmak.",
-    ],
-    requirements: [
-      "Python, Pandas, PyTorch ve Scikit-learn ile 3+ yıl pratik tecrübe.",
-      "Makine öğrenimi ve derin öğrenme teorilerine güçlü hakimiyet.",
-      "Yüksek lisans veya ilgili mühendislik derecesi.",
-    ],
-    benefits: [
-      "Yıllık teknoloji ve cihaz fonu",
-      "Esnek çalışma saatleri",
-      "Özel spor salonu ve sağlık üyelikleri",
-    ],
-  },
-  {
-    id: 5,
-    title: "iOS Mobile Developer (Swift)",
-    company: "Apple",
-    location: "Cupertino, California",
-    workplace: "On-site",
-    type: "Full-time",
-    experience: "3-5 years",
-    tags: ["On-site", "Full-time", "3-5 years", "Swift", "SwiftUI", "iOS SDK"],
-    salary: "$155k - $195k/yr",
-    salaryMin: 155000,
-    salaryMax: 195000,
-    time: "1 hour ago",
-    applications: "115+ Applications",
-    logoBg: "bg-gray-800",
-    description:
-      "Milyonlarca Apple kullanıcısına akıcı ve kusursuz mobil deneyim sunacak, SwiftUI ve modern iOS mimarilerine hakim Mobil Yazılım Geliştirici arıyoruz.",
-    responsibilities: [
-      "Swift ve SwiftUI ile yüksek performanslı iOS uygulamaları geliştirmek.",
-      "Apple Human Interface Guidelines prensiplerini mükemmel uygulamak.",
-      "Bellek optimizasyonu, offline-first mimari ve animasyonları kusursuzlaştırmak.",
-    ],
-    requirements: [
-      "App Store'da yayınlanmış en az 2 aktif uygulama.",
-      "Swift, Combine ve CoreData/SwiftData konularında derin bilgi.",
-      "Birim testleri ve UI test otomasyonları deneyimi.",
-    ],
-    benefits: [
-      "Apple ürün indirimleri",
-      "Cupertino kampüs olanakları ve gurme yemekler",
-      "Cömert ebeveynlik ve dinlenme izinleri",
-    ],
-  },
-  {
-    id: 6,
-    title: "DevOps & Cloud Architect",
-    company: "Netflix",
-    location: "Los Gatos, California",
-    workplace: "Remote",
-    type: "Full-time",
-    experience: "5+ years",
-    tags: ["Remote", "Full-time", "5+ years", "Kubernetes", "AWS", "Terraform"],
-    salary: "$175k - $225k/yr",
-    salaryMin: 175000,
-    salaryMax: 225000,
-    time: "2 hours ago",
-    applications: "64+ Applications",
-    logoBg: "bg-red-600",
-    description:
-      "Kesintisiz küresel video akış altyapımızı yönetecek, mikroservis orkestrasyonunu ve bulut güvenliğini en üst standartta tutacak Kıdemli DevOps Mimarı arıyoruz.",
-    responsibilities: [
-      "Kubernetes küme yönetimini ve CI/CD süreçlerini otomatize etmek.",
-      "Terraform ile Infrastructure as Code (IaC) altyapısını kurmak.",
-      "Sistem izleme (Grafana, Prometheus) ve olağanüstü durum kurtarma planlarını yürütmek.",
-    ],
-    requirements: [
-      "AWS veya GCP üzerinde büyük ölçekli altyapı yönetiminde 5+ yıl deneyim.",
-      "Docker, Kubernetes, Helm ve GitHub Actions uzmanlığı.",
-      "Sıfır kesinti (Zero-downtime) dağıtım stratejilerine hakimiyet.",
-    ],
-    benefits: [
-      "Sınırsız ücretli izin politikası",
-      "En üst düzey donanım ve ekipman desteği",
-      "Tam esnek çalışma saatleri",
-    ],
-  },
-  {
-    id: 7,
-    title: "Frontend Developer (React / Tailwind)",
-    company: "Spotify",
-    location: "Stockholm / Remote",
-    workplace: "Remote",
-    type: "Part-time",
-    experience: "1-3 years",
-    tags: ["Remote", "Part-time", "1-3 years", "React", "TailwindCSS", "Vite"],
-    salary: "$65k - $85k/yr",
-    salaryMin: 65000,
-    salaryMax: 85000,
-    time: "3 hours ago",
-    applications: "310+ Applications",
-    logoBg: "bg-green-600",
-    description:
-      "Müzik ve podcast arayüzlerimizi geliştirecek, modern web teknolojileri ve bileşen tabanlı mimariye meraklı dinamik bir Frontend Geliştirici arıyoruz.",
-    responsibilities: [
-      "React ve TailwindCSS ile modern, duyarlı (responsive) sayfalar oluşturmak.",
-      "Web performansını ve erişilebilirlik (a11y) standartlarını artırmak.",
-      "Müzik çalar etkileşimlerini ve mikro animasyonları kodlamak.",
-    ],
-    requirements: [
-      "Modern JavaScript / TypeScript ve React temellerine hakimiyet.",
-      "Responsive web tasarımı ve CSS/TailwindCSS tecrübesi.",
-      "Temiz, modüler ve sürdürülebilir kod yazma disiplini.",
-    ],
-    benefits: [
-      "Ücretsiz Spotify Premium ve etkinlik biletleri",
-      "Mentorluk ve hızlandırılmış kariyer gelişim programı",
-      "Yarı zamanlı (Part-time) esnek çalışma",
-    ],
-  },
-  {
-    id: 8,
-    title: "Cybersecurity Analyst",
-    company: "Stripe",
-    location: "San Francisco, California",
-    workplace: "Hybrid",
-    type: "Full-time",
-    experience: "3-5 years",
-    tags: ["Hybrid", "Full-time", "3-5 years", "SOC", "Penetration Testing", "Security"],
-    salary: "$135k - $170k/yr",
-    salaryMin: 135000,
-    salaryMax: 170000,
-    time: "5 hours ago",
-    applications: "47+ Applications",
-    logoBg: "bg-purple-600",
-    description:
-      "Finansal ödeme ağlarımızın güvenliğini sağlamak, siber tehditleri proaktif olarak tespit edip önlemek üzere Güvenlik Analisti takım arkadaşı arıyoruz.",
-    responsibilities: [
-      "Güvenlik açıklarını tespit etmek için sızma testleri ve kod denetimleri yapmak.",
-      "SIEM ve SOC altyapısını izleyerek şüpheli hareketleri raporlamak.",
-      "Güvenlik protokollerini ve şifreleme mekanizmalarını denetlemek.",
-    ],
-    requirements: [
-      "Siber güvenlik alanında 3+ yıl deneyim ve CEH / CISSP / OSCP sertifikaları.",
-      "Ağ protokolleri, web güvenliği ve bulut zafiyetleri konusunda uzmanlık.",
-      "Hızlı kriz yönetimi ve analitik problem çözme kabiliyeti.",
-    ],
-    benefits: [
-      "Sektör lideri yan haklar ve özel sağlık sigortası",
-      "Sürekli sertifikasyon ve konferans katılım fonu",
-      "Yemek ve ulaşım yardımı",
-    ],
-  },
 ];
 
 const HomePage = () => {
-  const [selectedJob, setSelectedJob] = useState<Job>(INITIAL_JOBS[0]);
+  const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS);
+  const [selectedJob, setSelectedJob] = useState<Job>(FALLBACK_JOBS[0]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSort, setSelectedSort] = useState("most-recent");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -316,11 +124,26 @@ const HomePage = () => {
   const [savedJobIds, setSavedJobIds] = useState<number[]>([]);
   const [appliedJobIds, setAppliedJobIds] = useState<number[]>([]);
 
-  // Mobile / Modal states
+  // Modals & Drawers
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [applyModalJob, setApplyModalJob] = useState<Job | null>(null);
+  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Form for New Job Post
+  const [newJobForm, setNewJobForm] = useState({
+    title: "",
+    company: "",
+    location: "İstanbul / Remote",
+    workplace: "Remote" as "Remote" | "On-site" | "Hybrid",
+    type: "Full-time" as "Full-time" | "Part-time" | "Contract",
+    experience: "3-5 years" as "1-3 years" | "3-5 years" | "5+ years",
+    salary: "$90k - $120k/yr",
+    description: "",
+    tags: "React, TypeScript, Remote",
+  });
+  const [isPosting, setIsPosting] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -329,14 +152,74 @@ const HomePage = () => {
     }, 3000);
   };
 
-  const handleToggleSaveJob = (e: React.MouseEvent, id: number) => {
+  // 1. Fetch live jobs from Supabase
+  const fetchJobs = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const formatted: Job[] = data.map((item) => ({
+          id: Number(item.id),
+          title: item.title,
+          company: item.company,
+          location: item.location,
+          workplace: item.workplace || "Remote",
+          type: item.type || "Full-time",
+          experience: item.experience || "3-5 years",
+          tags: item.tags || [],
+          salary: item.salary,
+          salaryMin: Number(item.salary_min) || 0,
+          salaryMax: Number(item.salary_max) || 0,
+          time: item.time || "Yeni",
+          applications: item.applications || "0 Başvuru",
+          logoBg: item.logo_bg || "bg-indigo-600",
+          description: item.description || "",
+          responsibilities: item.responsibilities || [],
+          requirements: item.requirements || [],
+          benefits: item.benefits || [],
+        }));
+
+        setJobs(formatted);
+        setSelectedJob(formatted[0]);
+      }
+    } catch (err) {
+      console.warn("Supabase load fallback:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  // 2. Handle Job Save (Supabase & Local)
+  const handleToggleSaveJob = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     if (savedJobIds.includes(id)) {
       setSavedJobIds((prev) => prev.filter((item) => item !== id));
+      await supabase
+        .from("saved_jobs")
+        .delete()
+        .eq("job_id", id)
+        ;
       showToast("İlan kaydedilenlerden kaldırıldı.");
     } else {
       setSavedJobIds((prev) => [...prev, id]);
-      showToast("İlan başarıyla kaydedildi!");
+      await supabase
+        .from("saved_jobs")
+        .insert({
+          job_id: id,
+          user_identifier: "guest_user",
+        })
+        ;
+      showToast("İlan Supabase veritabanına kaydedildi!");
     }
   };
 
@@ -358,18 +241,135 @@ const HomePage = () => {
     setApplyModalJob(job);
   };
 
-  const handleConfirmApply = () => {
+  // 3. Confirm Application to Supabase
+  const handleConfirmApply = async () => {
     if (applyModalJob) {
       setAppliedJobIds((prev) => [...prev, applyModalJob.id]);
       const jobName = applyModalJob.title;
+      const targetJobId = applyModalJob.id;
       setApplyModalJob(null);
-      showToast(`🎉 "${jobName}" ilanına başvurunuz başarıyla iletildi!`);
+
+      // Insert to Supabase applications table
+      try {
+        await supabase.from("applications").insert({
+          job_id: targetJobId,
+          applicant_name: "Misafir Başvuran",
+          applicant_email: "user@example.com",
+          status: "submitted",
+        });
+      } catch (err) {
+        console.warn("Application insert error:", err);
+      }
+
+      showToast(`🎉 "${jobName}" ilanına başvurunuz Supabase'e iletildi!`);
+    }
+  };
+
+  // 4. Create New Job Post into Supabase
+  const handleCreateJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newJobForm.title.trim() || !newJobForm.company.trim()) {
+      showToast("Lütfen ilan başlığı ve şirket adını doldurun.");
+      return;
+    }
+
+    setIsPosting(true);
+    const tagsArray = newJobForm.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const colors = [
+      "bg-indigo-600",
+      "bg-blue-600",
+      "bg-purple-600",
+      "bg-emerald-600",
+      "bg-amber-600",
+      "bg-rose-600",
+    ];
+    const randomBg = colors[Math.floor(Math.random() * colors.length)];
+
+    try {
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert({
+          title: newJobForm.title,
+          company: newJobForm.company,
+          location: newJobForm.location,
+          workplace: newJobForm.workplace,
+          type: newJobForm.type,
+          experience: newJobForm.experience,
+          salary: newJobForm.salary,
+          salary_min: 90000,
+          salary_max: 120000,
+          time: "Yeni",
+          applications: "0 Başvuru",
+          logo_bg: randomBg,
+          description:
+            newJobForm.description ||
+            `${newJobForm.company} bünyesinde ${newJobForm.title} pozisyonunda görevlendirilmek üzere dinamik takım arkadaşı arıyoruz.`,
+          tags: tagsArray.length > 0 ? tagsArray : [newJobForm.workplace, newJobForm.type],
+          responsibilities: [
+            "Proje gereksinimlerine uygun geliştirme yapmak",
+            "Ekip ile koordineli çalışmak",
+          ],
+          requirements: ["İlgili alanda deneyim", "Güçlü iletişim becerileri"],
+          benefits: ["Esnek çalışma saatleri", "Özel sağlık sigortası"],
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const newJobFormatted: Job = {
+          id: Number(data.id),
+          title: data.title,
+          company: data.company,
+          location: data.location,
+          workplace: data.workplace as any,
+          type: data.type as any,
+          experience: data.experience as any,
+          tags: data.tags || [],
+          salary: data.salary,
+          salaryMin: 90000,
+          salaryMax: 120000,
+          time: "Yeni",
+          applications: "0 Başvuru",
+          logoBg: randomBg,
+          description: data.description,
+          responsibilities: data.responsibilities || [],
+          requirements: data.requirements || [],
+          benefits: data.benefits || [],
+        };
+
+        setJobs((prev) => [newJobFormatted, ...prev]);
+        setSelectedJob(newJobFormatted);
+      }
+
+      setIsPostJobModalOpen(false);
+      setNewJobForm({
+        title: "",
+        company: "",
+        location: "İstanbul / Remote",
+        workplace: "Remote",
+        type: "Full-time",
+        experience: "3-5 years",
+        salary: "$90k - $120k/yr",
+        description: "",
+        tags: "React, TypeScript, Remote",
+      });
+      showToast("🚀 Yeni ilan Supabase veritabanına başarıyla kaydedildi!");
+    } catch (err: any) {
+      console.error(err);
+      showToast("İlan eklenirken bir hata oluştu.");
+    } finally {
+      setIsPosting(false);
     }
   };
 
   const handleSelectJob = (job: Job) => {
     setSelectedJob(job);
-    // On small screens, open the app-like bottom sheet / detail drawer
     if (window.innerWidth < 1280) {
       setIsMobileDetailOpen(true);
     }
@@ -397,54 +397,53 @@ const HomePage = () => {
 
   // Filtered & Sorted Jobs
   const filteredJobs = useMemo(() => {
-    return INITIAL_JOBS.filter((job) => {
-      // Search query match
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = job.title.toLowerCase().includes(q);
-        const matchesCompany = job.company.toLowerCase().includes(q);
-        const matchesLocation = job.location.toLowerCase().includes(q);
-        const matchesTags = job.tags.some((t) => t.toLowerCase().includes(q));
-        if (!matchesTitle && !matchesCompany && !matchesLocation && !matchesTags) {
-          return false;
+    return jobs
+      .filter((job) => {
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchesTitle = job.title.toLowerCase().includes(q);
+          const matchesCompany = job.company.toLowerCase().includes(q);
+          const matchesLocation = job.location.toLowerCase().includes(q);
+          const matchesTags = job.tags.some((t) => t.toLowerCase().includes(q));
+          if (!matchesTitle && !matchesCompany && !matchesLocation && !matchesTags) {
+            return false;
+          }
         }
-      }
 
-      // Workplace / Location filter
-      if (selectedLocations.length > 0) {
-        if (!selectedLocations.includes(job.workplace)) {
-          return false;
+        if (selectedLocations.length > 0) {
+          if (!selectedLocations.includes(job.workplace)) {
+            return false;
+          }
         }
-      }
 
-      // Job Type filter
-      if (selectedTypes.length > 0) {
-        if (!selectedTypes.includes(job.type)) {
-          return false;
+        if (selectedTypes.length > 0) {
+          if (!selectedTypes.includes(job.type)) {
+            return false;
+          }
         }
-      }
 
-      // Experience filter
-      if (selectedExperiences.length > 0) {
-        if (!selectedExperiences.includes(job.experience)) {
-          return false;
+        if (selectedExperiences.length > 0) {
+          if (!selectedExperiences.includes(job.experience)) {
+            return false;
+          }
         }
-      }
 
-      return true;
-    }).sort((a, b) => {
-      if (selectedSort === "a-z") {
-        return a.title.localeCompare(b.title);
-      }
-      if (selectedSort === "top-salary") {
-        return b.salaryMax - a.salaryMax;
-      }
-      if (selectedSort === "trending") {
-        return parseInt(b.applications) - parseInt(a.applications);
-      }
-      return a.id - b.id; // most-recent default
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        if (selectedSort === "a-z") {
+          return a.title.localeCompare(b.title);
+        }
+        if (selectedSort === "top-salary") {
+          return b.salaryMax - a.salaryMax;
+        }
+        if (selectedSort === "trending") {
+          return parseInt(b.applications) - parseInt(a.applications);
+        }
+        return b.id - a.id; // newest first
+      });
   }, [
+    jobs,
     searchQuery,
     selectedLocations,
     selectedTypes,
@@ -452,7 +451,6 @@ const HomePage = () => {
     selectedSort,
   ]);
 
-  // If selected job was filtered out, select first available
   const activeJob =
     filteredJobs.find((j) => j.id === selectedJob.id) ||
     filteredJobs[0] ||
@@ -480,7 +478,17 @@ const HomePage = () => {
       {/* Desktop Filter Aside */}
       <aside className="sticky top-24 hidden w-72 shrink-0 xl:block">
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-200/80 p-5 space-y-6">
-          <div className="flex items-center justify-between">
+          {/* Post Job Quick Button */}
+          <button
+            type="button"
+            onClick={() => setIsPostJobModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 py-3 px-4 text-sm font-bold text-white shadow-md shadow-indigo-200 transition active:scale-95"
+          >
+            <PlusIcon className="h-5 w-5" />
+            Yeni İlan Yayınla
+          </button>
+
+          <div className="flex items-center justify-between pt-2">
             <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <FunnelIcon className="h-5 w-5 text-indigo-600" />
               Filtreler
@@ -646,14 +654,24 @@ const HomePage = () => {
               )}
             </div>
 
+            {/* Post Job Button for Mobile */}
+            <button
+              type="button"
+              onClick={() => setIsPostJobModalOpen(true)}
+              className="xl:hidden flex items-center gap-1.5 h-12 px-3.5 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition shrink-0"
+              title="İlan Ekle"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">İlan Ekle</span>
+            </button>
+
             {/* Mobile Filter Toggle Button */}
             <button
               type="button"
               onClick={() => setIsMobileFiltersOpen(true)}
-              className="xl:hidden flex items-center gap-2 h-12 px-4 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 active:scale-95 transition shrink-0"
+              className="xl:hidden flex items-center gap-1.5 h-12 px-3.5 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 active:scale-95 transition shrink-0"
             >
               <FunnelIcon className="h-5 w-5 text-indigo-600" />
-              <span className="hidden sm:inline">Filtrele</span>
               {(selectedTypes.length > 0 ||
                 selectedExperiences.length > 0 ||
                 selectedLocations.length > 0) && (
@@ -668,11 +686,16 @@ const HomePage = () => {
 
           {/* Result Count and Active Filters Tag Strip */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <div className="text-gray-600 font-medium">
+            <div className="text-gray-600 font-medium flex items-center gap-2">
               <span className="text-gray-900 font-bold">
                 {filteredJobs.length}
               </span>{" "}
               ilan listeleniyor
+              {isLoading && (
+                <span className="text-xs text-indigo-600 animate-pulse flex items-center gap-1">
+                  <SparklesIcon className="h-3.5 w-3.5" /> Supabase'den yükleniyor...
+                </span>
+              )}
             </div>
 
             {/* Active Quick Badges */}
@@ -710,7 +733,7 @@ const HomePage = () => {
         </div>
 
         {/* Empty State */}
-        {filteredJobs.length === 0 && (
+        {filteredJobs.length === 0 && !isLoading && (
           <div className="text-center py-16 px-4 bg-white rounded-2xl border border-dashed border-gray-300">
             <BriefcaseIcon className="mx-auto h-12 w-12 text-gray-300" />
             <h3 className="mt-3 text-base font-semibold text-gray-900">
@@ -996,14 +1019,13 @@ const HomePage = () => {
         </aside>
       )}
 
-      {/* MOBILE / TABLET APP-LIKE DETAIL BOTTOM SHEET (DRAWER) */}
+      {/* MOBILE / TABLET DETAIL BOTTOM SHEET (DRAWER) */}
       <Transition.Root show={isMobileDetailOpen} as={Fragment}>
         <Dialog
           as="div"
           className="relative z-50 xl:hidden"
           onClose={setIsMobileDetailOpen}
         >
-          {/* Backdrop */}
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -1027,7 +1049,6 @@ const HomePage = () => {
               leaveTo="translate-y-full sm:translate-y-0 sm:scale-95 opacity-0"
             >
               <Dialog.Panel className="relative w-full max-w-lg max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in">
-                {/* Mobile Drawer Grabber / Header */}
                 <div className="p-4 pb-2 flex flex-col items-center shrink-0 border-b border-gray-100 relative">
                   <div className="w-12 h-1.5 bg-gray-300 rounded-full mb-3" />
                   <div className="w-full flex items-center justify-between px-2">
@@ -1043,9 +1064,7 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {/* Mobile Scrollable Content */}
                 <div className="overflow-y-auto p-5 space-y-5 flex-1 text-sm">
-                  {/* Job Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div
@@ -1086,7 +1105,6 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Badges */}
                   <div className="flex flex-wrap gap-2">
                     <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
                       {activeJob.applications}
@@ -1099,7 +1117,6 @@ const HomePage = () => {
                     </span>
                   </div>
 
-                  {/* Key Info Cards */}
                   <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3.5 rounded-2xl text-xs">
                     <div>
                       <span className="text-gray-400 block mb-0.5">Deneyim</span>
@@ -1121,7 +1138,6 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Description */}
                   <div>
                     <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">
                       Pozisyon Tanımı
@@ -1131,7 +1147,6 @@ const HomePage = () => {
                     </p>
                   </div>
 
-                  {/* Responsibilities */}
                   <div>
                     <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">
                       Sorumluluklar
@@ -1146,7 +1161,6 @@ const HomePage = () => {
                     </ul>
                   </div>
 
-                  {/* Requirements */}
                   <div>
                     <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">
                       Aranan Nitelikler
@@ -1161,7 +1175,6 @@ const HomePage = () => {
                     </ul>
                   </div>
 
-                  {/* Benefits */}
                   <div>
                     <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">
                       Yan Haklar
@@ -1177,7 +1190,6 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {/* Sticky Action Footer (App style) */}
                 <div className="p-4 bg-white border-t border-gray-200 shrink-0 flex items-center gap-3">
                   <button
                     type="button"
@@ -1247,7 +1259,6 @@ const HomePage = () => {
                 </div>
 
                 <div className="overflow-y-auto p-5 space-y-6 flex-1 text-sm">
-                  {/* Sort */}
                   <div>
                     <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
                       Sıralama
@@ -1275,7 +1286,6 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Location */}
                   <div>
                     <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
                       Çalışma Yeri
@@ -1304,7 +1314,6 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Job Type */}
                   <div>
                     <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
                       Çalışma Tipi
@@ -1333,7 +1342,6 @@ const HomePage = () => {
                     </div>
                   </div>
 
-                  {/* Experience */}
                   <div>
                     <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
                       Deneyim Seviyesi
@@ -1385,6 +1393,232 @@ const HomePage = () => {
         </Dialog>
       </Transition.Root>
 
+      {/* POST NEW JOB MODAL */}
+      <Transition.Root show={isPostJobModalOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setIsPostJobModalOpen(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300 transform"
+              enterFrom="scale-95 opacity-0"
+              enterTo="scale-100 opacity-100"
+              leave="ease-in duration-200 transform"
+              leaveFrom="scale-100 opacity-100"
+              leaveTo="scale-95 opacity-0"
+            >
+              <Dialog.Panel className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <PlusIcon className="h-5 w-5 text-indigo-600" />
+                    Yeni İş İlanı Yayınla
+                  </h3>
+                  <button
+                    onClick={() => setIsPostJobModalOpen(false)}
+                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 bg-gray-100"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateJob} className="mt-4 space-y-4 text-sm">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                      Pozisyon / İlan Başlığı *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Örn: Senior Frontend Developer"
+                      value={newJobForm.title}
+                      onChange={(e) =>
+                        setNewJobForm({ ...newJobForm, title: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                        Şirket Adı *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Örn: Oxobee Tech"
+                        value={newJobForm.company}
+                        onChange={(e) =>
+                          setNewJobForm({ ...newJobForm, company: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                        Lokasyon
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Örn: İstanbul / Remote"
+                        value={newJobForm.location}
+                        onChange={(e) =>
+                          setNewJobForm({ ...newJobForm, location: e.target.value })
+                        }
+                        className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                        Çalışma
+                      </label>
+                      <select
+                        value={newJobForm.workplace}
+                        onChange={(e) =>
+                          setNewJobForm({
+                            ...newJobForm,
+                            workplace: e.target.value as any,
+                          })
+                        }
+                        className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                      >
+                        <option value="Remote">Remote</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="On-site">On-site</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                        Tip
+                      </label>
+                      <select
+                        value={newJobForm.type}
+                        onChange={(e) =>
+                          setNewJobForm({
+                            ...newJobForm,
+                            type: e.target.value as any,
+                          })
+                        }
+                        className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                      >
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                        Deneyim
+                      </label>
+                      <select
+                        value={newJobForm.experience}
+                        onChange={(e) =>
+                          setNewJobForm({
+                            ...newJobForm,
+                            experience: e.target.value as any,
+                          })
+                        }
+                        className="w-full rounded-xl border border-gray-300 p-2.5 text-xs focus:border-indigo-600"
+                      >
+                        <option value="1-3 years">1-3 Yıl</option>
+                        <option value="3-5 years">3-5 Yıl</option>
+                        <option value="5+ years">5+ Yıl</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                      Maaş Bilgisi
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Örn: 80.000 TL - 120.000 TL"
+                      value={newJobForm.salary}
+                      onChange={(e) =>
+                        setNewJobForm({ ...newJobForm, salary: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                      Etiketler (Virgülle ayırın)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="React, TypeScript, Remote, Tailwind"
+                      value={newJobForm.tags}
+                      onChange={(e) =>
+                        setNewJobForm({ ...newJobForm, tags: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                      İş Açıklaması
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Pozisyon hakkında genel bilgiler ve aranan nitelikler..."
+                      value={newJobForm.description}
+                      onChange={(e) =>
+                        setNewJobForm({
+                          ...newJobForm,
+                          description: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                    />
+                  </div>
+
+                  <div className="pt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsPostJobModalOpen(false)}
+                      className="flex-1 py-3 rounded-xl border border-gray-300 font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isPosting}
+                      className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-bold shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95 disabled:opacity-50"
+                    >
+                      {isPosting ? "Kaydediliyor..." : "İlanı Canlıya Yayınla"}
+                    </button>
+                  </div>
+                </form>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
       {/* APPLY CONFIRMATION MODAL */}
       <Transition.Root show={!!applyModalJob} as={Fragment}>
         <Dialog
@@ -1429,7 +1663,7 @@ const HomePage = () => {
                   <strong className="text-gray-900 font-semibold">
                     {applyModalJob?.title}
                   </strong>{" "}
-                  pozisyonuna mevcut profiliniz ve özgeçmişiniz ile başvurulacaktır.
+                  pozisyonuna başvurunuz Supabase canlı veritabanına iletilecektir.
                 </p>
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
