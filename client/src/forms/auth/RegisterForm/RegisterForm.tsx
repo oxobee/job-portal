@@ -29,10 +29,33 @@ const RegisterForm = () => {
       <form onSubmit={form.handleSubmit} className="space-y-4" noValidate>
         <div>
           <label
+            htmlFor="fullName"
+            className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
+          >
+            Ad Soyad <span className="text-red-500">*</span>
+          </label>
+          <div>
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              required
+              placeholder="Adınız ve Soyadınız"
+              className="block w-full rounded-xl border border-gray-300 p-3 text-sm focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+              value={form.values.fullName}
+              disabled={form.isSubmitting}
+              onChange={form.handleChange}
+            />
+            {form.errors.fullName && <FieldError error={form.errors.fullName} />}
+          </div>
+        </div>
+
+        <div>
+          <label
             htmlFor="user_type_name"
             className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1"
           >
-            Kayıt Rolü / Türü <span className="text-red-500">*</span>
+            Hesap Türü <span className="text-red-500">*</span>
           </label>
           <select
             id="user_type_name"
