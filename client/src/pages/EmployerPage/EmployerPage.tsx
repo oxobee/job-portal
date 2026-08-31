@@ -11,7 +11,8 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   AcademicCapIcon,
-  
+  DocumentTextIcon,
+    
   EyeIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
@@ -49,6 +50,10 @@ export interface CandidateApplication {
   applicant_skills?: string[];
   applicant_experience?: any[];
   applicant_education?: any[];
+  is_disabled?: boolean;
+  disability_type?: string;
+  applicant_references?: any[];
+  applicant_document_url?: string;
   status: string;
   created_at: string;
   jobs?: EmployerJob;
@@ -67,8 +72,8 @@ const EmployerPage = () => {
   const [newJob, setNewJob] = useState({
     title: "",
     location: "İstanbul / Remote",
-    workplace: "Remote",
-    type: "Full-time",
+    workplace: "Aylık",
+    type: "Tam Zamanlı",
     experience: "3-5 years",
     salary: "30.000 TL - 45.000 TL",
     description: "",
@@ -441,7 +446,14 @@ const EmployerPage = () => {
                     {applications.map((app) => (
                       <tr key={app.id} className="hover:bg-gray-50/80 transition">
                         <td className="p-3">
-                          <div className="font-bold text-gray-900 text-sm">{app.applicant_name}</div>
+                          <div className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <span>{app.applicant_name}</span>
+                            {app.is_disabled && (
+                              <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-bold text-[10px] flex items-center gap-0.5">
+                                ♿ Engelli
+                              </span>
+                            )}
+                          </div>
                           <div className="text-indigo-600 font-medium text-xs">{app.applicant_title || "Yazılım / Tasarım"}</div>
                         </td>
                         <td className="p-3">
@@ -507,7 +519,14 @@ const EmployerPage = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{selectedCandidate?.applicant_name}</h3>
-                    <p className="text-sm font-semibold text-indigo-600">{selectedCandidate?.applicant_title || "Yazılım Geliştirici"}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-sm font-semibold text-indigo-600">{selectedCandidate?.applicant_title || "İş Arayan"}</p>
+                        {selectedCandidate?.is_disabled && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold text-[11px] flex items-center gap-1">
+                            ♿ Engelli Aday ({selectedCandidate?.disability_type || "Belirtildi"})
+                          </span>
+                        )}
+                      </div>
                     <p className="text-xs text-gray-400 mt-0.5">{selectedCandidate?.jobs?.title} Pozisyonu Başvurusu</p>
                   </div>
                 </div>
@@ -570,6 +589,40 @@ const EmployerPage = () => {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* References (Referanslar) */}
+                  {selectedCandidate.applicant_references && selectedCandidate.applicant_references.length > 0 && (
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2">Referanslar (Geçmiş Çalışma İrtibatları)</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedCandidate.applicant_references.map((ref: any, i: number) => (
+                          <div key={i} className="p-3 bg-white border border-gray-200 rounded-xl space-y-0.5">
+                            <div className="font-bold text-gray-900">{ref.name}</div>
+                            <div className="text-gray-500 font-medium">{ref.company}</div>
+                            <div className="text-indigo-600 font-bold flex items-center gap-1 mt-1">
+                              <PhoneIcon className="h-3 w-3" /> {ref.phone}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Uploaded Document / Certificate */}
+                  {selectedCandidate.applicant_document_url && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <DocumentTextIcon className="h-5 w-5 text-emerald-600" />
+                        <div>
+                          <span className="font-bold text-gray-900 block text-xs">Adayın Yüklediği Belge / CV</span>
+                          <span className="text-[11px] text-emerald-700">{selectedCandidate.applicant_document_url}</span>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-white text-emerald-700 font-bold rounded-lg border border-emerald-200 text-[11px]">
+                        Dosya Eki Mevcut
+                      </span>
                     </div>
                   )}
 
@@ -690,9 +743,11 @@ const EmployerPage = () => {
                       onChange={(e) => setNewJob({ ...newJob, workplace: e.target.value })}
                       className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                     >
-                      <option value="Remote">Remote</option>
-                      <option value="Hybrid">Hybrid</option>
-                      <option value="On-site">On-site</option>
+                      <option value="Aylık">Aylık</option>
+                      <option value="Günlük / Yevmiyeli">Günlük / Yevmiyeli</option>
+                      <option value="Saatlik">Saatlik</option>
+                      <option value="Haftalık">Haftalık</option>
+                      <option value="Uzaktan Çalışma">Uzaktan Çalışma</option>
                     </select>
                   </div>
 
@@ -703,9 +758,9 @@ const EmployerPage = () => {
                       onChange={(e) => setNewJob({ ...newJob, type: e.target.value })}
                       className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                     >
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
+                      <option value="Tam Zamanlı">Tam Zamanlı</option>
+                      <option value="Yarı Zamanlı">Yarı Zamanlı</option>
+                      <option value="Yevmiyeli / Dönemsel">Yevmiyeli / Dönemsel</option>
                     </select>
                   </div>
 
@@ -823,9 +878,11 @@ const EmployerPage = () => {
                         onChange={(e) => setEditingJob({ ...editingJob, workplace: e.target.value })}
                         className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                       >
-                        <option value="Remote">Remote</option>
-                        <option value="Hybrid">Hybrid</option>
-                        <option value="On-site">On-site</option>
+                        <option value="Aylık">Aylık</option>
+                        <option value="Günlük / Yevmiyeli">Günlük / Yevmiyeli</option>
+                        <option value="Saatlik">Saatlik</option>
+                        <option value="Haftalık">Haftalık</option>
+                        <option value="Uzaktan Çalışma">Uzaktan Çalışma</option>
                       </select>
                     </div>
 
@@ -836,9 +893,9 @@ const EmployerPage = () => {
                         onChange={(e) => setEditingJob({ ...editingJob, type: e.target.value })}
                         className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                       >
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="Contract">Contract</option>
+                        <option value="Tam Zamanlı">Tam Zamanlı</option>
+                        <option value="Yarı Zamanlı">Yarı Zamanlı</option>
+                        <option value="Yevmiyeli / Dönemsel">Yevmiyeli / Dönemsel</option>
                       </select>
                     </div>
 

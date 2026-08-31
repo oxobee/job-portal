@@ -14,8 +14,11 @@ export interface AppUser {
   skills?: string[];
   experience_history?: any[];
   education_history?: any[];
-  linkedin_url?: string;
-  portfolio_url?: string;
+  is_disabled?: boolean;
+  disability_type?: string;
+  references_list?: Array<{ name: string; company: string; phone: string; note?: string }>;
+  document_url?: string;
+  document_name?: string;
   company_name?: string;
   company_sector?: string;
   company_size?: string;
@@ -71,7 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(parsed);
         setIsAuthenticated(true);
 
-        // Fetch fresh profile data from Supabase
         if (parsed.id && parsed.id !== "super_admin_oxonom") {
           supabase
             .from("profiles")

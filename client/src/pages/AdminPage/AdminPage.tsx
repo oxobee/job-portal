@@ -971,7 +971,14 @@ const AdminPage = () => {
                     applications.map((app) => (
                       <tr key={app.id} className="hover:bg-gray-50 transition">
                         <td className="p-3">
-                          <div className="font-bold text-gray-900">{app.applicant_name || "Misafir Kullanıcı"}</div>
+                          <div className="font-bold text-gray-900 flex items-center gap-2">
+                            <span>{app.applicant_name || "İş Arayan"}</span>
+                            {app.is_disabled && (
+                              <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-bold text-[10px]">
+                                ♿ Engelli ({app.disability_type || "Belirtildi"})
+                              </span>
+                            )}
+                          </div>
                           <div className="text-gray-400 text-[11px]">{app.applicant_email || "-"}</div>
                         </td>
                         <td className="p-3">
@@ -1058,9 +1065,9 @@ const AdminPage = () => {
                       onChange={(e) => setNewJobData({ ...newJobData, workplace: e.target.value })}
                       className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                     >
-                      <option value="Remote">Remote</option>
-                      <option value="Hybrid">Hybrid</option>
-                      <option value="On-site">On-site</option>
+                      <option value="Aylık">Aylık</option>
+                      <option value="Günlük / Yevmiyeli">Günlük / Yevmiyeli</option>
+                      <option value="Saatlik">Saatlik</option><option value="Haftalık">Haftalık</option><option value="Uzaktan Çalışma">Uzaktan Çalışma</option>
                     </select>
                   </div>
 
@@ -1071,9 +1078,9 @@ const AdminPage = () => {
                       onChange={(e) => setNewJobData({ ...newJobData, type: e.target.value })}
                       className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                     >
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Contract">Contract</option>
+                      <option value="Tam Zamanlı">Tam Zamanlı</option>
+                      <option value="Yarı Zamanlı">Yarı Zamanlı</option>
+                      <option value="Yevmiyeli / Dönemsel">Yevmiyeli / Dönemsel</option>
                     </select>
                   </div>
 
@@ -1201,9 +1208,9 @@ const AdminPage = () => {
                         onChange={(e) => setEditingJob({ ...editingJob, workplace: e.target.value })}
                         className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                       >
-                        <option value="Remote">Remote</option>
-                        <option value="Hybrid">Hybrid</option>
-                        <option value="On-site">On-site</option>
+                        <option value="Aylık">Aylık</option>
+                        <option value="Günlük / Yevmiyeli">Günlük / Yevmiyeli</option>
+                        <option value="Saatlik">Saatlik</option><option value="Haftalık">Haftalık</option><option value="Uzaktan Çalışma">Uzaktan Çalışma</option>
                       </select>
                     </div>
                     <div>
@@ -1213,9 +1220,9 @@ const AdminPage = () => {
                         onChange={(e) => setEditingJob({ ...editingJob, type: e.target.value })}
                         className="w-full rounded-xl border border-gray-300 p-2 text-xs"
                       >
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="Contract">Contract</option>
+                        <option value="Tam Zamanlı">Tam Zamanlı</option>
+                        <option value="Yarı Zamanlı">Yarı Zamanlı</option>
+                        <option value="Yevmiyeli / Dönemsel">Yevmiyeli / Dönemsel</option>
                       </select>
                     </div>
                     <div>

@@ -117,6 +117,7 @@ const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalReason, setAuthModalReason] = useState<"apply" | "save">("apply");
+  const [isProfileIncompleteModalOpen, setIsProfileIncompleteModalOpen] = useState(false);
   const [jobs, setJobs] = useState<Job[]>(FALLBACK_JOBS);
   const [selectedJob, setSelectedJob] = useState<Job>(FALLBACK_JOBS[0]);
   const [isLoading, setIsLoading] = useState(true);
@@ -255,6 +256,17 @@ const HomePage = () => {
       showToast("Bu ilana zaten başvurdunuz.");
       return;
     }
+
+    // Check if job seeker profile has at least phone, skills, and experience
+    const hasPhone = user?.phone && user.phone.trim().length > 0;
+    const hasSkills = user?.skills && user.skills.length > 0;
+    const hasExperience = user?.experience_history && user.experience_history.length > 0;
+
+    if (!hasPhone || !hasSkills || !hasExperience) {
+      setIsProfileIncompleteModalOpen(true);
+      return;
+    }
+
     setApplyModalJob(job);
   };
 
@@ -274,11 +286,15 @@ const HomePage = () => {
           applicant_name: user?.full_name || "İş Arayan",
           applicant_email: user?.email || "",
           applicant_phone: user?.phone || "",
-          applicant_title: user?.title || "Yazılım Geliştirici",
+          applicant_title: user?.title || "İş Arayan",
           applicant_bio: user?.bio || "",
           applicant_skills: user?.skills || [],
           applicant_experience: user?.experience_history || [],
           applicant_education: user?.education_history || [],
+          is_disabled: !!user?.is_disabled,
+          disability_type: user?.disability_type || "",
+          applicant_references: user?.references_list || [],
+          applicant_document_url: user?.document_name ? user.document_name : "",
           status: "Beklemede",
         });
       } catch (err) {
@@ -566,7 +582,7 @@ const HomePage = () => {
               Çalışma Yeri
             </h5>
             <div className="space-y-2">
-              {["Remote", "Hybrid", "On-site"].map((item) => (
+              {["Saatlik", "Günlük / Yevmiyeli", "Haftalık", "Aylık", "Uzaktan Çalışma"].map((item) => (
                 <label
                   key={item}
                   className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer select-none hover:text-gray-900"
@@ -593,7 +609,7 @@ const HomePage = () => {
               Çalışma Şekli
             </h5>
             <div className="space-y-2">
-              {["Full-time", "Part-time", "Contract"].map((item) => (
+              {["Tam Zamanlı", "Yarı Zamanlı", "Yevmiyeli / Dönemsel"].map((item) => (
                 <label
                   key={item}
                   className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer select-none hover:text-gray-900"
@@ -620,7 +636,7 @@ const HomePage = () => {
               Deneyim
             </h5>
             <div className="space-y-2">
-              {["1-3 years", "3-5 years", "5+ years"].map((item) => (
+              {["Deneyimsiz", "1-3 Yıl", "3-5 Yıl", "5+ Yıl Usta"].map((item) => (
                 <label
                   key={item}
                   className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer select-none hover:text-gray-900"
@@ -1299,7 +1315,7 @@ const HomePage = () => {
                       Çalışma Yeri
                     </h5>
                     <div className="flex flex-wrap gap-2">
-                      {["Remote", "Hybrid", "On-site"].map((item) => (
+                      {["Saatlik", "Günlük / Yevmiyeli", "Haftalık", "Aylık", "Uzaktan Çalışma"].map((item) => (
                         <button
                           key={item}
                           type="button"
@@ -1327,7 +1343,7 @@ const HomePage = () => {
                       Çalışma Tipi
                     </h5>
                     <div className="flex flex-wrap gap-2">
-                      {["Full-time", "Part-time", "Contract"].map((item) => (
+                      {["Tam Zamanlı", "Yarı Zamanlı", "Yevmiyeli / Dönemsel"].map((item) => (
                         <button
                           key={item}
                           type="button"
@@ -1355,7 +1371,7 @@ const HomePage = () => {
                       Deneyim Seviyesi
                     </h5>
                     <div className="flex flex-wrap gap-2">
-                      {["1-3 years", "3-5 years", "5+ years"].map((item) => (
+                      {["Deneyimsiz", "1-3 Yıl", "3-5 Yıl", "5+ Yıl Usta"].map((item) => (
                         <button
                           key={item}
                           type="button"
@@ -1692,6 +1708,45 @@ const HomePage = () => {
                 </div>
               </Dialog.Panel>
             </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
+
+      
+      {/* PROFILE INCOMPLETE WARNING MODAL */}
+      <Transition.Root show={isProfileIncompleteModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsProfileIncompleteModalOpen(false)}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md bg-white rounded-3xl p-6 md:p-8 shadow-2xl border border-gray-100 text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-xs text-3xl">
+                ⚠️
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Profilinizi Tamamlayın
+                </h3>
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  İşverenlerin başvurunuzu inceleyebilmesi ve sizinle iletişime geçebilmesi için lütfen profilinize <strong>meslek / yeteneklerinizi, telefon numaranızı ve geçmiş iş deneyimlerinizi</strong> ekleyin.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Link
+                  to="/profile"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-500 transition active:scale-95"
+                >
+                  Profilimi Şimdi Doldur
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileIncompleteModalOpen(false)}
+                  className="flex w-full items-center justify-center rounded-xl bg-white border border-gray-300 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Daha Sonra
+                </button>
+              </div>
+            </Dialog.Panel>
           </div>
         </Dialog>
       </Transition.Root>
